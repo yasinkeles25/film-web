@@ -1,4 +1,4 @@
-const API_URL = "https://film-api-ru0v.onrender.com/";
+const API_URL = "https://film-api-ru0v.onrender.com/filmler";
 
 let tumFilmler = [];
 let aktifFilm = null;
