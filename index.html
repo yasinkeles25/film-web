@@ -9,16 +9,20 @@
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
 
-    <!-- Üst Menü -->
-    <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+    <!-- Dinamik Yapışkan Header (Scroll ile küçülür) -->
+    <header id="ana-header" class="bg-gray-900/90 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40 transition-all duration-300 py-8">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
             
-            <!-- Logo & Başlık Alanı -->
-            <div class="flex items-center gap-3 cursor-pointer" onclick="sayfaDegistir('galeri')">
-                <img src="logo.jpg" alt="Film Baykuşu" class="w-10 h-10 rounded-full object-cover border border-gray-700 shadow-md">
-                <h1 class="text-xl font-bold tracking-wide text-white">Film Baykuşu <span class="text-xs bg-red-950 text-red-400 px-2 py-0.5 rounded border border-red-800 ml-1">PRO</span></h1>
+            <!-- Logo & Marka Alanı -->
+            <div id="marka-alani" class="flex flex-col md:flex-row items-center gap-4 cursor-pointer transition-all duration-300" onclick="sayfaDegistir('galeri')">
+                <img id="logo-img" src="logo.jpg" alt="Film Baykuşu" class="w-24 h-24 rounded-full object-cover border-2 border-red-500 shadow-xl transition-all duration-300">
+                <div class="text-center md:text-left">
+                    <h1 id="logo-baslik" class="text-3xl font-extrabold tracking-wide text-white transition-all duration-300">Film Baykuşu <span class="text-xs bg-red-950 text-red-400 px-2 py-0.5 rounded border border-red-800 ml-1">PRO</span></h1>
+                    <p id="logo-slogan" class="text-xs text-gray-400 mt-1 transition-all duration-300">Kişisel Sinema ve Arşiv Platformu</p>
+                </div>
             </div>
 
+            <!-- Sayfa Menü Butonları -->
             <nav class="flex gap-2">
                 <button onclick="sayfaDegistir('galeri')" id="nav-galeri" class="px-4 py-2 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition">🖼️ Afiş Galerisi</button>
                 <button onclick="sayfaDegistir('ekle')" id="nav-ekle" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition">➕ Yeni Film</button>
@@ -31,7 +35,6 @@
 
         <!-- ================= SEKME 1: GALERİ ================= -->
         <section id="sec-galeri">
-            <!-- Filtreleme Çubuğu -->
             <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6 flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex-1 min-w-[200px]">
                     <input type="text" id="arama-input" oninput="filtrele()" placeholder="🔍 İsimle ara..." class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
@@ -41,7 +44,6 @@
                         <option value="Tümü">🎭 Tüm Türler</option>
                     </select>
                     
-                    <!-- YENİ: Yıl Filtresi -->
                     <select id="yil-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
                         <option value="Tümü">📅 Tüm Yıllar</option>
                     </select>
@@ -58,7 +60,6 @@
                 <div id="liste-sayac" class="text-xs text-gray-400 font-mono">0 film listelendi</div>
             </div>
 
-            <!-- Galeri Grid -->
             <div id="film-galerisi" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
         </section>
 
@@ -150,14 +151,13 @@
 
     </main>
 
-    <!-- ================= DETAY / DÜZENLEME MODAL ================= -->
+    <!-- Detay Modal -->
     <div id="film-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-gray-900 border border-gray-800 max-w-2xl w-full rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center">
                 <h3 id="modal-baslik" class="font-bold text-lg text-white truncate">Film Detayı</h3>
                 <button onclick="modalKapat()" class="text-gray-400 hover:text-white text-xl">✕</button>
             </div>
-            
             <div id="modal-icerik" class="p-6 overflow-y-auto space-y-4"></div>
         </div>
     </div>
