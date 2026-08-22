@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Film Baykuşu - Film Arşivi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+    <!-- Üst Menü -->
+    <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- Logo & Başlık Alanı -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="sayfaDegistir('galeri')">
+                <img src="logo.jpg" alt="Film Baykuşu" class="w-10 h-10 rounded-full object-cover border border-gray-700 shadow-md">
+                <h1 class="text-xl font-bold tracking-wide text-white">Film Baykuşu <span class="text-xs bg-red-950 text-red-400 px-2 py-0.5 rounded border border-red-800 ml-1">PRO</span></h1>
+            </div>
+
+            <nav class="flex gap-2">
+                <button onclick="sayfaDegistir('galeri')" id="nav-galeri" class="px-4 py-2 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition">🖼️ Afiş Galerisi</button>
+                <button onclick="sayfaDegistir('ekle')" id="nav-ekle" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition">➕ Yeni Film</button>
+                <button onclick="sayfaDegistir('analiz')" id="nav-analiz" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition">📊 Analiz</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6">
+
+        <!-- ================= SEKME 1: GALERİ ================= -->
+        <section id="sec-galeri">
+            <!-- Filtreleme Çubuğu -->
+            <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6 flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" id="arama-input" oninput="filtrele()" placeholder="🔍 İsimle ara..." class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <select id="tur-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        <option value="Tümü">🎭 Tüm Türler</option>
+                    </select>
+                    
+                    <!-- YENİ: Yıl Filtresi -->
+                    <select id="yil-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        <option value="Tümü">📅 Tüm Yıllar</option>
+                    </select>
+
+                    <select id="puan-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                        <option value="0">⭐ Tüm Puanlar</option>
+                        <option value="5">5+ Puan</option>
+                        <option value="6">6+ Puan</option>
+                        <option value="7">7+ Puan</option>
+                        <option value="8">8+ Puan</option>
+                        <option value="9">9+ Puan</option>
+                    </select>
+                </div>
+                <div id="liste-sayac" class="text-xs text-gray-400 font-mono">0 film listelendi</div>
+            </div>
+
+            <!-- Galeri Grid -->
+            <div id="film-galerisi" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        </section>
+
+        <!-- ================= SEKME 2: YENİ FİLM EKLE ================= -->
+        <section id="sec-ekle" class="hidden max-w-2xl mx-auto bg-gray-900 p-6 rounded-xl border border-gray-800">
+            <h2 class="text-xl font-bold mb-4 text-red-500">➕ Yeni Film Ekle</h2>
+            <form onsubmit="filmEkle(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Film Adı *</label>
+                    <input type="text" id="ekle-adi" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-red-500">
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Yıl</label>
+                        <input type="text" id="ekle-yil" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Puan (0-10)</label>
+                        <input type="number" step="0.1" id="ekle-puan" value="7.0" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Süre (Dk)</label>
+                        <input type="number" id="ekle-sure" value="120" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Türler (Virgülle ayırın)</label>
+                    <input type="text" id="ekle-turler" placeholder="Dram, Gerilim" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Ülkeler (Virgülle ayırın)</label>
+                    <input type="text" id="ekle-ulkeler" placeholder="ABD, Türkiye" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Afiş URL</label>
+                    <input type="text" id="ekle-afis" placeholder="https://..." class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Özet</label>
+                    <textarea id="ekle-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm"></textarea>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 text-sm text-gray-300">
+                        <input type="checkbox" id="ekle-izlendi" class="rounded bg-gray-950 border-gray-800 text-red-500"> İzlendi
+                    </label>
+                    <input type="text" id="ekle-tarih" placeholder="Tarih (YYYY-MM-DD)" class="bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg transition">Kaydet</button>
+            </form>
+        </section>
+
+        <!-- ================= SEKME 3: ANALİZ ================= -->
+        <section id="sec-analiz" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-center">
+                    <div class="text-sm text-gray-400">Toplam Film</div>
+                    <div id="stat-toplam" class="text-3xl font-bold text-red-500 mt-1">0</div>
+                </div>
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-center">
+                    <div class="text-sm text-gray-400">Ortalama Puan</div>
+                    <div id="stat-ortalama" class="text-3xl font-bold text-yellow-500 mt-1">0.0</div>
+                </div>
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-center">
+                    <div class="text-sm text-gray-400">İzlenen Toplam Süre</div>
+                    <div id="stat-sure" class="text-3xl font-bold text-blue-500 mt-1">0 Saat</div>
+                    <div id="stat-gun" class="text-xs text-gray-500 mt-0.5">0.0 Gün</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
+                    <h3 class="text-base font-semibold mb-4 text-gray-300">🏆 En Yüksek Puanlı 10 Film</h3>
+                    <canvas id="chart-top10"></canvas>
+                </div>
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
+                    <h3 class="text-base font-semibold mb-4 text-gray-300">📅 Onyıllara Göre Dağılım</h3>
+                    <canvas id="chart-onyil"></canvas>
+                </div>
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
+                    <h3 class="text-base font-semibold mb-4 text-gray-300">🎭 En Popüler Türler (İlk 7)</h3>
+                    <canvas id="chart-turler"></canvas>
+                </div>
+                <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
+                    <h3 class="text-base font-semibold mb-4 text-gray-300">📈 Puan Dağılımı</h3>
+                    <canvas id="chart-puan"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= DETAY / DÜZENLEME MODAL ================= -->
+    <div id="film-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-800 max-w-2xl w-full rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+                <h3 id="modal-baslik" class="font-bold text-lg text-white truncate">Film Detayı</h3>
+                <button onclick="modalKapat()" class="text-gray-400 hover:text-white text-xl">✕</button>
+            </div>
+            
+            <div id="modal-icerik" class="p-6 overflow-y-auto space-y-4"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
