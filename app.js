@@ -5,7 +5,6 @@ let tumFilmler = [];
 let aktifFilm = null;
 let charts = {};
 
-// Google Harita Kütüphanesini Yükle
 google.charts.load('current', {'packages':['geochart']});
 
 async function verileriYukle(denemeSayisi = 1) {
@@ -17,7 +16,7 @@ async function verileriYukle(denemeSayisi = 1) {
             <div class="col-span-full py-20 text-center">
                 <div class="inline-block animate-spin text-5xl mb-4">🦉</div>
                 <h3 class="text-lg font-bold text-white">Film Baykuşu Uyanıyor...</h3>
-                <p class="text-xs text-gray-400 mt-2 max-w-sm mx-auto">Sunucu uyku modundan çıkıyor. Lütfen 30 saniye kadar bekleyin.</p>
+                <p class="text-xs text-gray-400 mt-2 max-w-sm mx-auto">Sunucu uyku modundan çıkıyor. Lütfen biraz bekleyin.</p>
             </div>
         `;
         sayac.innerText = "Yükleniyor...";
@@ -124,12 +123,10 @@ function galeriRender(filmler) {
     });
 }
 
-// O Günün Tarihini Formatlı Getiren Fonksiyon
 function bugununTarihi() {
     return new Date().toISOString().split('T')[0];
 }
 
-// YENİ: TMDB'den Otomatik Veri Çekme
 async function tmdbVeriCek() {
     const arama = document.getElementById("tmdb-arama").value.trim();
     if (!arama) return alert("Lütfen önce bir film adı yazın!");
@@ -146,7 +143,6 @@ async function tmdbVeriCek() {
         if (data.hata) {
             alert(data.hata);
         } else {
-            // Formu TMDB verileri ile doldur
             document.getElementById("ekle-adi").value = data.adi || "";
             document.getElementById("ekle-yil").value = data.yil || "";
             document.getElementById("ekle-puan").value = data.puan || 0;
@@ -154,6 +150,7 @@ async function tmdbVeriCek() {
             document.getElementById("ekle-ozet").value = data.ozet || "";
             document.getElementById("ekle-afis").value = data.afis_yolu || "";
             if (data.turler) document.getElementById("ekle-turler").value = data.turler.join(", ");
+            if (data.ulkeler) document.getElementById("ekle-ulkeler").value = data.ulkeler.join(", ");
         }
     } catch (e) {
         alert("Bağlantı hatası yaşandı.");
@@ -207,8 +204,6 @@ function detayGorunumuRender() {
 function duzenleGorunumuRender() {
     const container = document.getElementById("modal-icerik");
     document.getElementById("modal-baslik").innerText = `Düzenle: ${aktifFilm.adi}`;
-    
-    // Düzenleme ekranında da boşsa bugünün tarihini atayalım
     const defaultTarih = aktifFilm.izlenme_tarihi ? aktifFilm.izlenme_tarihi : bugununTarihi();
 
     container.innerHTML = `
@@ -303,7 +298,7 @@ async function filmEkle(e) {
         ulkeler: document.getElementById("ekle-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
         afis_yolu: document.getElementById("ekle-afis").value.trim(),
         ozet: document.getElementById("ekle-ozet").value.trim(),
-        izlendi: true, // Her zaman true
+        izlendi: true,
         izlenme_tarihi: document.getElementById("ekle-tarih").value.trim()
     };
 
@@ -328,7 +323,6 @@ function sayfaDegistir(sayfa) {
     document.getElementById("sec-ekle").classList.toggle("hidden", sayfa !== "ekle");
     document.getElementById("sec-analiz").classList.toggle("hidden", sayfa !== "analiz");
 
-    // Yeni Film Ekle sekmesi açıldığında tarihi bugünün tarihi yap
     if (sayfa === "ekle") {
         document.getElementById("ekle-tarih").value = bugununTarihi();
     }
@@ -344,28 +338,61 @@ function sayfaDegistir(sayfa) {
 
     if (sayfa === "analiz") {
         analizCiz();
-        haritaCiz(); // Harita çizimini tetikle
+        haritaCiz();
     }
 }
 
+// Genişletilmiş ve Güçlendirilmiş Dünya Haritası Motoru
 function haritaCiz() {
+    // Türkçe ve Yaygın İsimleri Google GeoChart Formatına Eşleyen Sözlük
+    const ulkeSozlugu = {
+        'türkiye': 'Turkey', 'turkiye': 'Turkey',
+        'abd': 'United States', 'amerika': 'United States', 'usa': 'United States',
+        'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'uk': 'United Kingdom',
+        'güney kore': 'South Korea', 'kore': 'South Korea', 'south korea': 'South Korea',
+        'ispanya': 'Spain', 'spain': 'Spain',
+        'fransa': 'France', 'france': 'France',
+        'almanya': 'Germany', 'germany': 'Germany',
+        'italya': 'Italy', 'italy': 'Italy',
+        'hindistan': 'India', 'india': 'India',
+        'japonya': 'Japan', 'japan': 'Japan',
+        'norveç': 'Norway', 'norway': 'Norway',
+        'danimarka': 'Denmark', 'denmark': 'Denmark',
+        'isveç': 'Sweden', 'sweden': 'Sweden',
+        'irlanda': 'Ireland', 'ireland': 'Ireland',
+        'avustralya': 'Australia', 'australia': 'Australia',
+        'kanada': 'Canada', 'canada': 'Canada',
+        'rusya': 'Russia', 'russia': 'Russia',
+        'iran': 'Iran', 'çin': 'China', 'china': 'China',
+        'hong kong': 'Hong Kong', 'tayvan': 'Taiwan', 'taiwan': 'Taiwan',
+        'belçika': 'Belgium', 'belgium': 'Belgium',
+        'avusturya': 'Austria', 'austria': 'Austria',
+        'kolombiya': 'Colombia', 'colombia': 'Colombia',
+        'fas': 'Morocco', 'morocco': 'Morocco',
+        'lübnan': 'Lebanon', 'lebanon': 'Lebanon',
+        'libya': 'Libya'
+    };
+
     const ulkeSayim = {};
+
     tumFilmler.forEach(f => {
         if (Array.isArray(f.ulkeler)) {
             f.ulkeler.forEach(u => {
-                let temiz = u.trim();
-                if (temiz) {
-                    // Google Charts'ın dünyayı doğru tanıması için ufak çeviri
-                    if (temiz.toLowerCase() === 'türkiye') temiz = 'Turkey';
-                    if (temiz.toLowerCase() === 'abd' || temiz.toLowerCase() === 'amerika') temiz = 'United States';
-                    if (temiz.toLowerCase() === 'ingiltere' || temiz.toLowerCase() === 'birleşik krallık') temiz = 'United Kingdom';
-                    if (temiz.toLowerCase() === 'güney kore') temiz = 'South Korea';
-                    
-                    ulkeSayim[temiz] = (ulkeSayim[temiz] || 0) + 1;
-                }
+                const parcalar = u.split(/[,/&]/);
+                parcalar.forEach(p => {
+                    const temiz = p.trim().toLowerCase();
+                    if (temiz) {
+                        const eslesenUlke = ulkeSozlugu[temiz] || (p.trim().charAt(0).toUpperCase() + p.trim().slice(1));
+                        ulkeSayim[eslesenUlke] = (ulkeSayim[eslesenUlke] || 0) + 1;
+                    }
+                });
             });
         }
     });
+
+    const ulkeSayisi = Object.keys(ulkeSayim).length;
+    const sayacEl = document.getElementById('toplam-ulke-sayac');
+    if (sayacEl) sayacEl.innerText = `${ulkeSayisi} Farklı Ülke`;
 
     const veriDizisi = [['Ülke', 'Film Sayısı']];
     for (const [ulke, sayi] of Object.entries(ulkeSayim)) {
@@ -375,9 +402,9 @@ function haritaCiz() {
     const data = google.visualization.arrayToDataTable(veriDizisi);
     const options = {
         backgroundColor: 'transparent',
-        datalessRegionColor: '#1f2937', // İzlenmeyen ülkeler (koyu gri)
-        defaultColor: '#14b8a6', // Ana renk turkuaz
-        colorAxis: {colors: ['#0f766e', '#5eead4']}, // Turkuaz ton geçişleri
+        datalessRegionColor: '#1e293b', 
+        defaultColor: '#14b8a6',
+        colorAxis: {colors: ['#0f766e', '#2dd4bf', '#a7f3d0']},
         legend: {textStyle: {color: '#9ca3af', fontSize: 12}}
     };
 
@@ -468,7 +495,6 @@ function analizCiz() {
     });
 }
 
-// Fixed Header olduğu için küçülme efekti artık titreme yapmayacak
 window.addEventListener("scroll", () => {
     const header = document.getElementById("ana-header");
     const logoImg = document.getElementById("logo-img");
