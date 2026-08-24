@@ -5,6 +5,35 @@ let tumFilmler = [];
 let aktifFilm = null;
 let charts = {};
 
+// Ulusal isimleri GeoChart standartlarına dönüştüren sözlük (Global yapıldı ki filtrelemede kullanılsın)
+const ulkeSozlugu = {
+    'türkiye': 'Turkey', 'turkiye': 'Turkey',
+    'abd': 'United States', 'amerika': 'United States', 'usa': 'United States',
+    'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'uk': 'United Kingdom',
+    'güney kore': 'South Korea', 'kore': 'South Korea', 'south korea': 'South Korea',
+    'ispanya': 'Spain', 'spain': 'Spain',
+    'fransa': 'France', 'france': 'France',
+    'almanya': 'Germany', 'germany': 'Germany',
+    'italya': 'Italy', 'italy': 'Italy',
+    'hindistan': 'India', 'india': 'India',
+    'japonya': 'Japan', 'japan': 'Japan',
+    'norveç': 'Norway', 'norway': 'Norway',
+    'danimarka': 'Denmark', 'denmark': 'Denmark',
+    'isveç': 'Sweden', 'sweden': 'Sweden',
+    'irlanda': 'Ireland', 'ireland': 'Ireland',
+    'avustralya': 'Australia', 'australia': 'Australia',
+    'kanada': 'Canada', 'canada': 'Canada',
+    'rusya': 'Russia', 'russia': 'Russia',
+    'iran': 'Iran', 'çin': 'China', 'china': 'China',
+    'hong kong': 'Hong Kong', 'tayvan': 'Taiwan', 'taiwan': 'Taiwan',
+    'belçika': 'Belgium', 'belgium': 'Belgium',
+    'avusturya': 'Austria', 'austria': 'Austria',
+    'kolombiya': 'Colombia', 'colombia': 'Colombia',
+    'fas': 'Morocco', 'morocco': 'Morocco',
+    'lübnan': 'Lebanon', 'lebanon': 'Lebanon',
+    'libya': 'Libya'
+};
+
 google.charts.load('current', {'packages':['geochart']});
 
 async function verileriYukle(denemeSayisi = 1) {
@@ -70,14 +99,35 @@ function dropdownlariDoldur() {
     });
 }
 
+function aramaSifirla() {
+    document.getElementById("arama-input").value = "";
+    document.getElementById("tur-filtre").value = "Tümü";
+    document.getElementById("yil-filtre").value = "Tümü";
+    document.getElementById("puan-filtre").value = "0";
+    filtrele();
+}
+
 function filtrele() {
-    const arama = document.getElementById("arama-input").value.toLowerCase();
+    const aramaInput = document.getElementById("arama-input").value.toLowerCase();
     const secilenTur = document.getElementById("tur-filtre").value;
     const secilenYil = document.getElementById("yil-filtre").value;
     const minPuan = parseFloat(document.getElementById("puan-filtre").value);
 
+    // Özel Arama Mantığı (Harita veya Serilerden tetiklenen özel kelimeler)
+    let arananKelime = aramaInput;
+    let ozelUlke = "";
+    let ozelSeri = "";
+
+    if (aramaInput.startsWith("ülke:")) {
+        ozelUlke = aramaInput.split(":")[1].trim().toLowerCase();
+        arananKelime = ""; // İsimde arama yapma
+    } else if (aramaInput.startsWith("seri:")) {
+        ozelSeri = aramaInput.split(":")[1].trim().toLowerCase();
+        arananKelime = ""; // İsimde arama yapma
+    }
+
     const filtrelenmis = tumFilmler.filter(film => {
-        const adiUyar = film.adi.toLowerCase().includes(arama);
+        const adiUyar = arananKelime === "" || film.adi.toLowerCase().includes(arananKelime);
         const puanUyar = (film.puan || 0) >= minPuan;
         const yilUyar = (secilenYil === "Tümü") || (film.yil && film.yil.toString() === secilenYil);
         
@@ -85,7 +135,22 @@ function filtrele() {
         if (secilenTur !== "Tümü") {
             turUyar = Array.isArray(film.turler) && film.turler.some(t => t.toLowerCase().includes(secilenTur.toLowerCase()));
         }
-        return adiUyar && puanUyar && turUyar && yilUyar;
+
+        let ulkeUyar = true;
+        if (ozelUlke !== "") {
+            ulkeUyar = Array.isArray(film.ulkeler) && film.ulkeler.some(u => {
+                const uKucuk = u.toLowerCase();
+                const ingilizceKarsilik = ulkeSozlugu[uKucuk] || uKucuk;
+                return uKucuk.includes(ozelUlke) || ingilizceKarsilik.toLowerCase() === ozelUlke;
+            });
+        }
+
+        let seriUyar = true;
+        if (ozelSeri !== "") {
+            seriUyar = film.seri && film.seri.toLowerCase() === ozelSeri;
+        }
+
+        return adiUyar && puanUyar && turUyar && yilUyar && ulkeUyar && seriUyar;
     });
 
     galeriRender(filtrelenmis);
@@ -123,6 +188,54 @@ function galeriRender(filmler) {
     });
 }
 
+function serileriCiz() {
+    const galeri = document.getElementById("seriler-galerisi");
+    galeri.innerHTML = "";
+
+    // Filmleri serilerine göre grupla
+    const seriGruplari = {};
+    tumFilmler.forEach(f => {
+        if (f.seri && f.seri.trim() !== "") {
+            if (!seriGruplari[f.seri]) seriGruplari[f.seri] = [];
+            seriGruplari[f.seri].push(f);
+        }
+    });
+
+    const seriİsimleri = Object.keys(seriGruplari).sort();
+
+    if (seriİsimleri.length === 0) {
+        galeri.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500">Henüz hiçbir seriye ait film eklenmemiş.</div>`;
+        return;
+    }
+
+    seriİsimleri.forEach(seriAdi => {
+        const filmler = seriGruplari[seriAdi];
+        const ilkFilm = filmler[0]; // Kapağı temsil edecek film
+        const afis = (ilkFilm.afis_yolu && ilkFilm.afis_yolu.startsWith("http")) 
+            ? ilkFilm.afis_yolu 
+            : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
+
+        const kart = document.createElement("div");
+        kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative";
+        
+        // Tıklandığında Galeri sekmesine gidip o seriyi filtreleyecek
+        kart.onclick = () => {
+            sayfaDegistir('galeri');
+            document.getElementById('arama-input').value = `seri:${seriAdi}`;
+            filtrele();
+        };
+
+        kart.innerHTML = `
+            <img src="${afis}" alt="${seriAdi}" class="w-full h-64 object-cover opacity-80 hover:opacity-100 transition">
+            <div class="absolute bottom-0 w-full bg-gradient-to-t from-black to-transparent p-4 pt-12">
+                <h4 class="font-bold text-base text-white shadow-sm">${seriAdi}</h4>
+                <p class="text-xs text-teal-400 font-semibold mt-1">${filmler.length} Film</p>
+            </div>
+        `;
+        galeri.appendChild(kart);
+    });
+}
+
 function bugununTarihi() {
     return new Date().toISOString().split('T')[0];
 }
@@ -151,6 +264,9 @@ async function tmdbVeriCek() {
             document.getElementById("ekle-afis").value = data.afis_yolu || "";
             if (data.turler) document.getElementById("ekle-turler").value = data.turler.join(", ");
             if (data.ulkeler) document.getElementById("ekle-ulkeler").value = data.ulkeler.join(", ");
+            
+            // YENİ: Otomatik Seri Adı
+            if (data.seri) document.getElementById("ekle-seri").value = data.seri;
         }
     } catch (e) {
         alert("Bağlantı hatası yaşandı.");
@@ -174,10 +290,16 @@ function detayGorunumuRender() {
         ? aktifFilm.afis_yolu 
         : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
 
+    // Serisi varsa onu göstermek için küçük bir badge
+    const seriBileşeni = (aktifFilm.seri && aktifFilm.seri.trim() !== "") 
+        ? `<div class="bg-teal-900/50 border border-teal-800 text-teal-400 text-xs px-2 py-1 rounded inline-block mb-2">🎬 ${aktifFilm.seri}</div>` 
+        : "";
+
     container.innerHTML = `
         <div class="flex flex-col sm:flex-row gap-6">
             <img src="${afis}" class="w-full sm:w-48 h-64 object-cover rounded-lg border border-gray-800">
             <div class="space-y-2 flex-1">
+                ${seriBileşeni}
                 <div class="flex gap-3 text-sm text-gray-300 font-medium">
                     <span>📅 ${aktifFilm.yil || '?'}</span>
                     <span>⏱️ ${aktifFilm.sure || 0} dk</span>
@@ -227,12 +349,16 @@ function duzenleGorunumuRender() {
                 </div>
             </div>
             <div>
-                <label class="block text-xs text-gray-400">Türler (Virgülle ayırın)</label>
+                <label class="block text-xs text-gray-400">Türler</label>
                 <input type="text" id="d-turler" value="${(aktifFilm.turler || []).join(', ')}" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-400">Ülkeler (Virgülle ayırın)</label>
+                <label class="block text-xs text-gray-400">Ülkeler</label>
                 <input type="text" id="d-ulkeler" value="${(aktifFilm.ulkeler || []).join(', ')}" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400">Seri / Koleksiyon Adı (Opsiyonel)</label>
+                <input type="text" id="d-seri" value="${aktifFilm.seri || ''}" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm focus:border-teal-500">
             </div>
             <div>
                 <label class="block text-xs text-gray-400">Afiş URL</label>
@@ -243,7 +369,7 @@ function duzenleGorunumuRender() {
                 <textarea id="d-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">${aktifFilm.ozet || ''}</textarea>
             </div>
             <div>
-                <label class="block text-xs text-gray-400 mb-1">İzlenme Tarihi</label>
+                <label class="block text-xs text-gray-400">İzlenme Tarihi</label>
                 <input type="date" id="d-tarih" value="${defaultTarih}" class="bg-gray-950 border border-gray-800 rounded p-2 text-sm w-full focus:border-teal-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
@@ -263,6 +389,7 @@ async function filmGuncelle(e) {
         sure: parseInt(document.getElementById("d-sure").value) || 0,
         turler: document.getElementById("d-turler").value.split(",").map(t => t.trim()).filter(Boolean),
         ulkeler: document.getElementById("d-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
+        seri: document.getElementById("d-seri").value.trim(),
         afis_yolu: document.getElementById("d-afis").value.trim(),
         ozet: document.getElementById("d-ozet").value.trim(),
         izlendi: true, 
@@ -296,6 +423,7 @@ async function filmEkle(e) {
         sure: parseInt(document.getElementById("ekle-sure").value) || 0,
         turler: document.getElementById("ekle-turler").value.split(",").map(t => t.trim()).filter(Boolean),
         ulkeler: document.getElementById("ekle-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
+        seri: document.getElementById("ekle-seri").value.trim(),
         afis_yolu: document.getElementById("ekle-afis").value.trim(),
         ozet: document.getElementById("ekle-ozet").value.trim(),
         izlendi: true,
@@ -319,7 +447,9 @@ function modalKapat() {
 }
 
 function sayfaDegistir(sayfa) {
+    // Sekmeleri Gizle / Göster
     document.getElementById("sec-galeri").classList.toggle("hidden", sayfa !== "galeri");
+    document.getElementById("sec-seriler").classList.toggle("hidden", sayfa !== "seriler");
     document.getElementById("sec-ekle").classList.toggle("hidden", sayfa !== "ekle");
     document.getElementById("sec-analiz").classList.toggle("hidden", sayfa !== "analiz");
 
@@ -327,52 +457,27 @@ function sayfaDegistir(sayfa) {
         document.getElementById("ekle-tarih").value = bugununTarihi();
     }
 
-    ["galeri", "ekle", "analiz"].forEach(s => {
+    // Buton Renklerini Güncelle
+    ["galeri", "seriler", "ekle", "analiz"].forEach(s => {
         const btn = document.getElementById(`nav-${s}`);
         if (s === sayfa) {
-            btn.className = "px-4 py-2 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition";
+            btn.className = "px-4 py-2 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition whitespace-nowrap";
         } else {
-            btn.className = "px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition";
+            btn.className = "px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition whitespace-nowrap";
         }
     });
 
-    if (sayfa === "analiz") {
+    // Sekmeye Göre Ekstra Tetikleyiciler
+    if (sayfa === "seriler") {
+        serileriCiz();
+    }
+    else if (sayfa === "analiz") {
         analizCiz();
         haritaCiz();
     }
 }
 
-// Genişletilmiş ve Güçlendirilmiş Dünya Haritası Motoru
 function haritaCiz() {
-    // Türkçe ve Yaygın İsimleri Google GeoChart Formatına Eşleyen Sözlük
-    const ulkeSozlugu = {
-        'türkiye': 'Turkey', 'turkiye': 'Turkey',
-        'abd': 'United States', 'amerika': 'United States', 'usa': 'United States',
-        'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'uk': 'United Kingdom',
-        'güney kore': 'South Korea', 'kore': 'South Korea', 'south korea': 'South Korea',
-        'ispanya': 'Spain', 'spain': 'Spain',
-        'fransa': 'France', 'france': 'France',
-        'almanya': 'Germany', 'germany': 'Germany',
-        'italya': 'Italy', 'italy': 'Italy',
-        'hindistan': 'India', 'india': 'India',
-        'japonya': 'Japan', 'japan': 'Japan',
-        'norveç': 'Norway', 'norway': 'Norway',
-        'danimarka': 'Denmark', 'denmark': 'Denmark',
-        'isveç': 'Sweden', 'sweden': 'Sweden',
-        'irlanda': 'Ireland', 'ireland': 'Ireland',
-        'avustralya': 'Australia', 'australia': 'Australia',
-        'kanada': 'Canada', 'canada': 'Canada',
-        'rusya': 'Russia', 'russia': 'Russia',
-        'iran': 'Iran', 'çin': 'China', 'china': 'China',
-        'hong kong': 'Hong Kong', 'tayvan': 'Taiwan', 'taiwan': 'Taiwan',
-        'belçika': 'Belgium', 'belgium': 'Belgium',
-        'avusturya': 'Austria', 'austria': 'Austria',
-        'kolombiya': 'Colombia', 'colombia': 'Colombia',
-        'fas': 'Morocco', 'morocco': 'Morocco',
-        'lübnan': 'Lebanon', 'lebanon': 'Lebanon',
-        'libya': 'Libya'
-    };
-
     const ulkeSayim = {};
 
     tumFilmler.forEach(f => {
@@ -391,7 +496,7 @@ function haritaCiz() {
     });
 
     const ulkeSayisi = Object.keys(ulkeSayim).length;
-    const sayacEl = document.getElementById('toplam-ulke-sayac');
+    const sayacEl = document.getElementById('top-ulke-sayac');
     if (sayacEl) sayacEl.innerText = `${ulkeSayisi} Farklı Ülke`;
 
     const veriDizisi = [['Ülke', 'Film Sayısı']];
@@ -410,6 +515,18 @@ function haritaCiz() {
 
     const haritaKutu = document.getElementById('chart-harita');
     const chart = new google.visualization.GeoChart(haritaKutu);
+    
+    // YENİ: Haritaya Tıklama Olayı (Ülke Filtresi)
+    google.visualization.events.addListener(chart, 'select', () => {
+        const selection = chart.getSelection();
+        if (selection.length > 0) {
+            const secilenUlke = data.getValue(selection[0].row, 0); // Tıklanan ülkenin adı
+            sayfaDegistir('galeri');
+            document.getElementById('arama-input').value = `ülke:${secilenUlke}`;
+            filtrele();
+        }
+    });
+
     chart.draw(data, options);
 }
 
