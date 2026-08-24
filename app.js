@@ -1,4 +1,4 @@
-const BASE_URL = "https://film-api-ru0v.onrender.com"; 
+const BASE_URL = "postgresql://neondb_owner:npg_0PDQ3sAEFGVj@ep-muddy-feather-ay97098f-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"; 
 const API_URL = `${BASE_URL}/filmler`;
 
 let tumFilmler = [];
