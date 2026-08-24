@@ -6,20 +6,18 @@
     <title>Film Baykuşu - Film Arşivi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Dünya Haritası İçin Google Charts -->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
 
-    <!-- Dinamik Yapışkan Header (Jitter / Titreme Hatası Çözüldü: fixed kullanıldı) -->
+    <!-- Dinamik Yapışkan Header (PRO Rozeti Kaldırıldı) -->
     <header id="ana-header" class="fixed w-full top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300 py-8">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
             
             <div id="marka-alani" class="flex flex-col md:flex-row items-center gap-4 cursor-pointer transition-all duration-300" onclick="sayfaDegistir('galeri')">
-                <!-- Turkuaz çerçeveli logo -->
                 <img id="logo-img" src="logo.jpg" alt="Film Baykuşu" class="w-24 h-24 rounded-full object-cover border-2 border-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.4)] transition-all duration-300">
                 <div class="text-center md:text-left">
-                    <h1 id="logo-baslik" class="text-3xl font-extrabold tracking-wide text-white transition-all duration-300">Film Baykuşu <span class="text-xs bg-teal-900 text-teal-400 px-2 py-0.5 rounded border border-teal-700 ml-1">PRO</span></h1>
+                    <h1 id="logo-baslik" class="text-3xl font-extrabold tracking-wide text-white transition-all duration-300">Film Baykuşu</h1>
                     <p id="logo-slogan" class="text-xs text-gray-400 mt-1 transition-all duration-300">Kişisel Sinema ve Arşiv Platformu</p>
                 </div>
             </div>
@@ -32,7 +30,6 @@
         </div>
     </header>
 
-    <!-- Header fixed olduğu için içerik altta kalmasın diye pt-40 eklendi -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 pt-48 md:pt-40">
 
         <!-- ================= SEKME 1: GALERİ ================= -->
@@ -71,7 +68,7 @@
 
             <!-- OTOMATİK ÇEKME ALANI -->
             <div class="bg-gray-950 p-4 rounded-lg border border-teal-900 mb-6 flex gap-3">
-                <input type="text" id="tmdb-arama" placeholder="Film adını yazın (Örn: Interstellar)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
+                <input type="text" id="tmdb-arama" placeholder="Film adını yazın (Örn: Parasite)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
                 <button type="button" onclick="tmdbVeriCek()" class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Otomatik Doldur</button>
             </div>
             
@@ -113,7 +110,6 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">İzlenme Tarihi</label>
-                    <!-- Otomatik bugünün tarihiyle dolacak, manuel de değiştirilebilir -->
                     <input type="date" id="ekle-tarih" class="bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm text-gray-300 w-full sm:w-auto focus:border-teal-500">
                 </div>
                 <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-medium py-3 rounded-lg transition mt-4">Koleksiyona Kaydet</button>
@@ -138,10 +134,13 @@
                 </div>
             </div>
 
-            <!-- Dünya Haritası Alanı Eklendi -->
+            <!-- Gelişmiş Dünya Haritası -->
             <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg">
-                <h3 class="text-base font-semibold mb-4 text-gray-300">🌍 Ülke Sineması Haritası</h3>
-                <div id="chart-harita" style="width: 100%; height: 400px; display: flex; justify-content: center; align-items: center;"></div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-semibold text-gray-300">🌍 Ülke Sineması Haritası</h3>
+                    <span id="toplam-ulke-sayac" class="text-xs text-teal-400 font-mono">0 Farklı Ülke</span>
+                </div>
+                <div id="chart-harita" style="width: 100%; height: 420px;" class="flex items-center justify-center"></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
