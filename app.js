@@ -1,52 +1,41 @@
-const API_URL = "https://film-api-ru0v.onrender.com/filmler";
+const BASE_URL = "https://film-api-ru0v.onrender.com"; 
+const API_URL = `${BASE_URL}/filmler`;
 
 let tumFilmler = [];
 let aktifFilm = null;
 let charts = {};
 
-// Sunucu uyanana kadar tekrar tekrar deneyen akıllı yükleme fonksiyonu
+// Google Harita Kütüphanesini Yükle
+google.charts.load('current', {'packages':['geochart']});
+
 async function verileriYukle(denemeSayisi = 1) {
     const galeri = document.getElementById("film-galerisi");
     const sayac = document.getElementById("liste-sayac");
 
-    // İlk açılışta kullanıcıya şık bir bilgilendirme göster
     if (denemeSayisi === 1) {
         galeri.innerHTML = `
-            <div class="col-span-full py-16 text-center">
-                <div class="inline-block animate-spin text-4xl mb-4">🦉</div>
+            <div class="col-span-full py-20 text-center">
+                <div class="inline-block animate-spin text-5xl mb-4">🦉</div>
                 <h3 class="text-lg font-bold text-white">Film Baykuşu Uyanıyor...</h3>
-                <p class="text-xs text-gray-400 mt-2 max-w-sm mx-auto">Ücretsiz bulut sunucusu uyku modundan çıkıyor. İlk açılış 30-40 saniye sürebilir, lütfen bekleyin.</p>
+                <p class="text-xs text-gray-400 mt-2 max-w-sm mx-auto">Sunucu uyku modundan çıkıyor. Lütfen 30 saniye kadar bekleyin.</p>
             </div>
         `;
         sayac.innerText = "Yükleniyor...";
     }
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 saniye bekle
-
-        const res = await fetch(API_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
+        const res = await fetch(API_URL);
         if (!res.ok) throw new Error("Sunucu yanıt vermedi");
 
         tumFilmler = await res.json();
         dropdownlariDoldur();
         filtrele();
     } catch (e) {
-        console.warn(`Bağlantı denemesi ${denemeSayisi} başarısız oldu, sunucu uyanıyor olabilir...`);
         sayac.innerText = `Sunucu bekleniyor (${denemeSayisi})...`;
-        
-        // 3 saniye sonra tekrar dene (maksimum 15 deneme / ~45 saniye)
         if (denemeSayisi < 15) {
             setTimeout(() => verileriYukle(denemeSayisi + 1), 3000);
         } else {
-            galeri.innerHTML = `
-                <div class="col-span-full py-12 text-center text-red-400">
-                    <p class="font-bold">⚠️ Bağlantı zaman aşımına uğradı.</p>
-                    <button onclick="verileriYukle(1)" class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm">Tekrar Dene</button>
-                </div>
-            `;
+            galeri.innerHTML = `<div class="col-span-full py-12 text-center text-red-400">⚠️ Bağlantı zaman aşımına uğradı.</div>`;
         }
     }
 }
@@ -119,7 +108,7 @@ function galeriRender(filmler) {
             : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
 
         const kart = document.createElement("div");
-        kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-red-500/50 hover:scale-105 transition cursor-pointer flex flex-col justify-between";
+        kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500/50 hover:scale-105 transition cursor-pointer flex flex-col justify-between";
         kart.onclick = () => filmDetayAc(film.id);
         kart.innerHTML = `
             <img src="${afis}" alt="${film.adi}" class="w-full h-72 object-cover" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok';">
@@ -127,12 +116,51 @@ function galeriRender(filmler) {
                 <h4 class="font-bold text-sm truncate text-gray-100">${film.adi}</h4>
                 <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
                     <span>📅 ${film.yil || '?'}</span>
-                    <span class="text-yellow-400 font-semibold">⭐ ${film.puan || '0.0'}</span>
+                    <span class="text-teal-400 font-semibold">⭐ ${film.puan || '0.0'}</span>
                 </div>
             </div>
         `;
         galeri.appendChild(kart);
     });
+}
+
+// O Günün Tarihini Formatlı Getiren Fonksiyon
+function bugununTarihi() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// YENİ: TMDB'den Otomatik Veri Çekme
+async function tmdbVeriCek() {
+    const arama = document.getElementById("tmdb-arama").value.trim();
+    if (!arama) return alert("Lütfen önce bir film adı yazın!");
+
+    const buton = document.querySelector("button[onclick='tmdbVeriCek()']");
+    const orjinalMetin = buton.innerText;
+    buton.innerText = "⏳ Bulunuyor...";
+    buton.disabled = true;
+
+    try {
+        const res = await fetch(`${BASE_URL}/tmdb/ara?film_adi=${encodeURIComponent(arama)}`);
+        const data = await res.json();
+
+        if (data.hata) {
+            alert(data.hata);
+        } else {
+            // Formu TMDB verileri ile doldur
+            document.getElementById("ekle-adi").value = data.adi || "";
+            document.getElementById("ekle-yil").value = data.yil || "";
+            document.getElementById("ekle-puan").value = data.puan || 0;
+            document.getElementById("ekle-sure").value = data.sure || 0;
+            document.getElementById("ekle-ozet").value = data.ozet || "";
+            document.getElementById("ekle-afis").value = data.afis_yolu || "";
+            if (data.turler) document.getElementById("ekle-turler").value = data.turler.join(", ");
+        }
+    } catch (e) {
+        alert("Bağlantı hatası yaşandı.");
+    } finally {
+        buton.innerText = orjinalMetin;
+        buton.disabled = false;
+    }
 }
 
 async function filmDetayAc(id) {
@@ -156,12 +184,12 @@ function detayGorunumuRender() {
                 <div class="flex gap-3 text-sm text-gray-300 font-medium">
                     <span>📅 ${aktifFilm.yil || '?'}</span>
                     <span>⏱️ ${aktifFilm.sure || 0} dk</span>
-                    <span class="text-yellow-400">⭐ ${aktifFilm.puan || 0}/10</span>
+                    <span class="text-teal-400">⭐ ${aktifFilm.puan || 0}/10</span>
                 </div>
                 <p class="text-xs text-gray-400"><strong>Türler:</strong> ${(aktifFilm.turler || []).join(", ") || 'Belirtilmemiş'}</p>
                 <p class="text-xs text-gray-400"><strong>Ülkeler:</strong> ${(aktifFilm.ulkeler || []).join(", ") || 'Belirtilmemiş'}</p>
-                <p class="text-xs ${aktifFilm.izlendi ? 'text-green-400' : 'text-red-400'} font-semibold">
-                    ${aktifFilm.izlendi ? `✅ İzlendi (${aktifFilm.izlenme_tarihi || ''})` : '❌ İzlenmedi'}
+                <p class="text-xs text-teal-400 font-semibold">
+                    ✅ İzlendi (${aktifFilm.izlenme_tarihi || 'Tarih Yok'})
                 </p>
                 <div class="mt-2">
                     <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Özet</h5>
@@ -169,9 +197,9 @@ function detayGorunumuRender() {
                 </div>
             </div>
         </div>
-        <div class="border-t border-gray-800 pt-4 flex justify-end gap-3">
-            <button onclick="duzenleGorunumuRender()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition">✏️ Düzenle</button>
-            <button onclick="filmSil(${aktifFilm.id})" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition">🗑️ Sil</button>
+        <div class="border-t border-gray-800 pt-4 flex justify-end gap-3 mt-4">
+            <button onclick="duzenleGorunumuRender()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm transition">✏️ Düzenle</button>
+            <button onclick="filmSil(${aktifFilm.id})" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm transition">🗑️ Sil</button>
         </div>
     `;
 }
@@ -179,11 +207,15 @@ function detayGorunumuRender() {
 function duzenleGorunumuRender() {
     const container = document.getElementById("modal-icerik");
     document.getElementById("modal-baslik").innerText = `Düzenle: ${aktifFilm.adi}`;
+    
+    // Düzenleme ekranında da boşsa bugünün tarihini atayalım
+    const defaultTarih = aktifFilm.izlenme_tarihi ? aktifFilm.izlenme_tarihi : bugununTarihi();
+
     container.innerHTML = `
         <form onsubmit="filmGuncelle(event)" class="space-y-3">
             <div>
                 <label class="block text-xs text-gray-400">Film Adı</label>
-                <input type="text" id="d-adi" value="${aktifFilm.adi}" required class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">
+                <input type="text" id="d-adi" value="${aktifFilm.adi}" required class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm focus:border-teal-500">
             </div>
             <div class="grid grid-cols-3 gap-2">
                 <div>
@@ -215,15 +247,13 @@ function duzenleGorunumuRender() {
                 <label class="block text-xs text-gray-400">Özet</label>
                 <textarea id="d-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">${aktifFilm.ozet || ''}</textarea>
             </div>
-            <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" id="d-izlendi" ${aktifFilm.izlendi ? 'checked' : ''}> İzlendi
-                </label>
-                <input type="text" id="d-tarih" value="${aktifFilm.izlenme_tarihi || ''}" placeholder="Tarih" class="bg-gray-950 border border-gray-800 rounded p-1.5 text-sm">
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">İzlenme Tarihi</label>
+                <input type="date" id="d-tarih" value="${defaultTarih}" class="bg-gray-950 border border-gray-800 rounded p-2 text-sm w-full focus:border-teal-500">
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="detayGorunumuRender()" class="px-3 py-1.5 bg-gray-800 text-gray-300 rounded text-sm">İptal</button>
-                <button type="submit" class="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm">Kaydet</button>
+                <button type="button" onclick="detayGorunumuRender()" class="px-3 py-1.5 bg-gray-800 text-gray-300 rounded text-sm hover:bg-gray-700">İptal</button>
+                <button type="submit" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded text-sm transition">Kaydet</button>
             </div>
         </form>
     `;
@@ -240,7 +270,7 @@ async function filmGuncelle(e) {
         ulkeler: document.getElementById("d-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
         afis_yolu: document.getElementById("d-afis").value.trim(),
         ozet: document.getElementById("d-ozet").value.trim(),
-        izlendi: document.getElementById("d-izlendi").checked,
+        izlendi: true, 
         izlenme_tarihi: document.getElementById("d-tarih").value.trim()
     };
 
@@ -273,7 +303,7 @@ async function filmEkle(e) {
         ulkeler: document.getElementById("ekle-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
         afis_yolu: document.getElementById("ekle-afis").value.trim(),
         ozet: document.getElementById("ekle-ozet").value.trim(),
-        izlendi: document.getElementById("ekle-izlendi").checked,
+        izlendi: true, // Her zaman true
         izlenme_tarihi: document.getElementById("ekle-tarih").value.trim()
     };
 
@@ -298,6 +328,11 @@ function sayfaDegistir(sayfa) {
     document.getElementById("sec-ekle").classList.toggle("hidden", sayfa !== "ekle");
     document.getElementById("sec-analiz").classList.toggle("hidden", sayfa !== "analiz");
 
+    // Yeni Film Ekle sekmesi açıldığında tarihi bugünün tarihi yap
+    if (sayfa === "ekle") {
+        document.getElementById("ekle-tarih").value = bugununTarihi();
+    }
+
     ["galeri", "ekle", "analiz"].forEach(s => {
         const btn = document.getElementById(`nav-${s}`);
         if (s === sayfa) {
@@ -307,7 +342,48 @@ function sayfaDegistir(sayfa) {
         }
     });
 
-    if (sayfa === "analiz") analizCiz();
+    if (sayfa === "analiz") {
+        analizCiz();
+        haritaCiz(); // Harita çizimini tetikle
+    }
+}
+
+function haritaCiz() {
+    const ulkeSayim = {};
+    tumFilmler.forEach(f => {
+        if (Array.isArray(f.ulkeler)) {
+            f.ulkeler.forEach(u => {
+                let temiz = u.trim();
+                if (temiz) {
+                    // Google Charts'ın dünyayı doğru tanıması için ufak çeviri
+                    if (temiz.toLowerCase() === 'türkiye') temiz = 'Turkey';
+                    if (temiz.toLowerCase() === 'abd' || temiz.toLowerCase() === 'amerika') temiz = 'United States';
+                    if (temiz.toLowerCase() === 'ingiltere' || temiz.toLowerCase() === 'birleşik krallık') temiz = 'United Kingdom';
+                    if (temiz.toLowerCase() === 'güney kore') temiz = 'South Korea';
+                    
+                    ulkeSayim[temiz] = (ulkeSayim[temiz] || 0) + 1;
+                }
+            });
+        }
+    });
+
+    const veriDizisi = [['Ülke', 'Film Sayısı']];
+    for (const [ulke, sayi] of Object.entries(ulkeSayim)) {
+        veriDizisi.push([ulke, sayi]);
+    }
+
+    const data = google.visualization.arrayToDataTable(veriDizisi);
+    const options = {
+        backgroundColor: 'transparent',
+        datalessRegionColor: '#1f2937', // İzlenmeyen ülkeler (koyu gri)
+        defaultColor: '#14b8a6', // Ana renk turkuaz
+        colorAxis: {colors: ['#0f766e', '#5eead4']}, // Turkuaz ton geçişleri
+        legend: {textStyle: {color: '#9ca3af', fontSize: 12}}
+    };
+
+    const haritaKutu = document.getElementById('chart-harita');
+    const chart = new google.visualization.GeoChart(haritaKutu);
+    chart.draw(data, options);
 }
 
 function analizCiz() {
@@ -315,7 +391,7 @@ function analizCiz() {
     const ortPuan = tumFilmler.reduce((a, b) => a + (b.puan || 0), 0) / (tumFilmler.length || 1);
     document.getElementById("stat-ortalama").innerText = ortPuan.toFixed(2);
 
-    const izlenenDk = tumFilmler.filter(f => f.izlendi).reduce((a, b) => a + (b.sure || 0), 0);
+    const izlenenDk = tumFilmler.reduce((a, b) => a + (b.sure || 0), 0);
     const saat = izlenenDk / 60;
     const gun = saat / 24;
     document.getElementById("stat-sure").innerText = `${Math.floor(saat)} Saat`;
@@ -323,18 +399,16 @@ function analizCiz() {
 
     Object.values(charts).forEach(c => c.destroy());
 
-    // 1. Top 10 Film
     const top10 = [...tumFilmler].sort((a, b) => b.puan - a.puan).slice(0, 10);
     charts.top10 = new Chart(document.getElementById("chart-top10"), {
         type: 'bar',
         data: {
             labels: top10.map(f => f.adi),
-            datasets: [{ label: 'IMDb Puanı', data: top10.map(f => f.puan), backgroundColor: '#ef4444' }]
+            datasets: [{ label: 'IMDb Puanı', data: top10.map(f => f.puan), backgroundColor: '#2dd4bf' }]
         },
-        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
+        options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#374151' } }, y: { grid: { display: false } } } }
     });
 
-    // 2. Onyıllar
     const onyilSayim = {};
     tumFilmler.forEach(f => {
         const y = parseInt(f.yil);
@@ -347,12 +421,11 @@ function analizCiz() {
         type: 'bar',
         data: {
             labels: Object.keys(onyilSayim).sort(),
-            datasets: [{ label: 'Film Sayısı', data: Object.keys(onyilSayim).sort().map(k => onyilSayim[k]), backgroundColor: '#3b82f6' }]
+            datasets: [{ label: 'Film Sayısı', data: Object.keys(onyilSayim).sort().map(k => onyilSayim[k]), backgroundColor: '#0ea5e9' }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#374151' } }, x: { grid: { display: false } } } }
     });
 
-    // 3. Popüler Türler
     const turSayim = {};
     tumFilmler.forEach(f => {
         if (Array.isArray(f.turler)) {
@@ -372,12 +445,11 @@ function analizCiz() {
         type: 'doughnut',
         data: {
             labels: siraliTurler.map(t => t[0]),
-            datasets: [{ data: siraliTurler.map(t => t[1]), backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7'] }]
+            datasets: [{ data: siraliTurler.map(t => t[1]), backgroundColor: ['#14b8a6', '#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#f59e0b'], borderColor: '#111827' }]
         },
-        options: { responsive: true }
+        options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#9ca3af' } } } }
     });
 
-    // 4. Puan Dağılımı
     const puanAraliklari = { '1-4': 0, '5-6': 0, '7-8': 0, '9-10': 0 };
     tumFilmler.forEach(f => {
         const p = f.puan || 0;
@@ -390,13 +462,13 @@ function analizCiz() {
         type: 'pie',
         data: {
             labels: Object.keys(puanAraliklari),
-            datasets: [{ data: Object.values(puanAraliklari), backgroundColor: ['#64748b', '#3b82f6', '#22c55e', '#eab308'] }]
+            datasets: [{ data: Object.values(puanAraliklari), backgroundColor: ['#475569', '#3b82f6', '#10b981', '#f59e0b'], borderColor: '#111827' }]
         },
-        options: { responsive: true }
+        options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#9ca3af' } } } }
     });
 }
 
-// Scroll Shrink Efekti
+// Fixed Header olduğu için küçülme efekti artık titreme yapmayacak
 window.addEventListener("scroll", () => {
     const header = document.getElementById("ana-header");
     const logoImg = document.getElementById("logo-img");
@@ -428,5 +500,4 @@ window.addEventListener("scroll", () => {
     }
 });
 
-// Sayfa açıldığında başlat
 verileriYukle();
