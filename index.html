@@ -10,6 +10,7 @@
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
 
+    <!-- Dinamik Sabit Header (Scroll ile küçülen logo) -->
     <header id="ana-header" class="fixed w-full top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300 py-8">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
             
@@ -34,7 +35,6 @@
 
         <!-- ================= SEKME 1: GALERİ ================= -->
         <section id="sec-galeri">
-            <!-- Temizle butonu eklendi (Haritadan filtreleme sonrası kolayca sıfırlamak için) -->
             <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6 flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex-1 min-w-[200px] flex gap-2">
                     <input type="text" id="arama-input" oninput="filtrele()" placeholder="🔍 İsimle ara..." class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-teal-500">
@@ -62,28 +62,28 @@
             <div id="film-galerisi" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
         </section>
 
-        <!-- ================= YENİ SEKME: SERİLER ================= -->
+        <!-- ================= SEKME 2: SERİLER ================= -->
         <section id="sec-seriler" class="hidden">
             <div class="mb-6 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-teal-400">🎬 Film Serileri ve Koleksiyonlar</h2>
                 <p class="text-sm text-gray-400">Bir seriye tıklayarak o serinin filmlerini listeleyebilirsiniz.</p>
             </div>
-            <div id="seriler-galerisi" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Javascript ile Doldurulacak -->
-            </div>
+            <div id="seriler-galerisi" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
         </section>
 
-        <!-- ================= SEKME 2: YENİ FİLM EKLE ================= -->
+        <!-- ================= SEKME 3: YENİ FİLM EKLE ================= -->
         <section id="sec-ekle" class="hidden max-w-2xl mx-auto bg-gray-900 p-6 rounded-xl border border-gray-800">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-teal-400">➕ Yeni Film Ekle</h2>
             </div>
 
+            <!-- TMDB Arama Çubuğu -->
             <div class="bg-gray-950 p-4 rounded-lg border border-teal-900 mb-6 flex gap-3">
                 <input type="text" id="tmdb-arama" placeholder="Film adını yazın (Örn: Interstellar)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
                 <button type="button" onclick="tmdbVeriCek()" class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Otomatik Doldur</button>
             </div>
             
+            <!-- Manuel / Otomatik Form -->
             <form onsubmit="filmEkle(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Film Adı *</label>
@@ -104,25 +104,28 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Türler</label>
-                    <input type="text" id="ekle-turler" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Türler (Virgülle ayırın)</label>
+                    <input type="text" id="ekle-turler" placeholder="Aksiyon, Macera" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Ülkeler</label>
-                    <input type="text" id="ekle-ulkeler" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Ülkeler (Virgülle ayırın)</label>
+                    <input type="text" id="ekle-ulkeler" placeholder="ABD, İngiltere" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
                 </div>
-                <!-- YENİ: SERİ ADI GİRİŞ ALANI -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Seri / Koleksiyon Adı (Opsiyonel)</label>
                     <input type="text" id="ekle-seri" placeholder="Örn: Yüzüklerin Efendisi Serisi" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Afiş URL</label>
-                    <input type="text" id="ekle-afis" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    <input type="text" id="ekle-afis" placeholder="https://..." class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Özet</label>
-                    <textarea id="ekle-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm"></textarea>
+                    <textarea id="ekle-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-teal-400 mb-1">🦉 Kişisel Düşüncelerim</label>
+                    <textarea id="ekle-notlar" rows="3" placeholder="Bu film sende nasıl bir his bıraktı?" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500"></textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">İzlenme Tarihi</label>
@@ -132,7 +135,7 @@
             </form>
         </section>
 
-        <!-- ================= SEKME 3: ANALİZ ================= -->
+        <!-- ================= SEKME 4: ANALİZ ================= -->
         <section id="sec-analiz" class="hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-center shadow-lg">
@@ -150,7 +153,7 @@
                 </div>
             </div>
 
-            <!-- Dünya Haritası (Tıklanabilir) -->
+            <!-- Tıklanabilir Dünya Haritası -->
             <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg">
                 <div class="flex justify-between items-center mb-4">
                     <div>
@@ -184,7 +187,7 @@
 
     </main>
 
-    <!-- Detay Modal -->
+    <!-- Detay / Düzenleme Modal Penceresi -->
     <div id="film-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-gray-900 border border-gray-800 max-w-2xl w-full rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900 sticky top-0 z-10">
