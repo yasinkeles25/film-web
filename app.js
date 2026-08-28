@@ -5,7 +5,6 @@ let tumFilmler = [];
 let aktifFilm = null;
 let charts = {};
 
-// Ulusal isimleri GeoChart standartlarına dönüştüren sözlük (Global yapıldı ki filtrelemede kullanılsın)
 const ulkeSozlugu = {
     'türkiye': 'Turkey', 'turkiye': 'Turkey',
     'abd': 'United States', 'amerika': 'United States', 'usa': 'United States',
@@ -113,17 +112,17 @@ function filtrele() {
     const secilenYil = document.getElementById("yil-filtre").value;
     const minPuan = parseFloat(document.getElementById("puan-filtre").value);
 
-    // Özel Arama Mantığı (Harita veya Serilerden tetiklenen özel kelimeler)
     let arananKelime = aramaInput;
     let ozelUlke = "";
     let ozelSeri = "";
+    let orjinalSeriAdi = "";
 
     if (aramaInput.startsWith("ülke:")) {
         ozelUlke = aramaInput.split(":")[1].trim().toLowerCase();
-        arananKelime = ""; // İsimde arama yapma
+        arananKelime = "";
     } else if (aramaInput.startsWith("seri:")) {
         ozelSeri = aramaInput.split(":")[1].trim().toLowerCase();
-        arananKelime = ""; // İsimde arama yapma
+        arananKelime = "";
     }
 
     const filtrelenmis = tumFilmler.filter(film => {
@@ -148,21 +147,35 @@ function filtrele() {
         let seriUyar = true;
         if (ozelSeri !== "") {
             seriUyar = film.seri && film.seri.toLowerCase() === ozelSeri;
+            if (seriUyar && orjinalSeriAdi === "") orjinalSeriAdi = film.seri; // Orijinal ismi kaydet
         }
 
         return adiUyar && puanUyar && turUyar && yilUyar && ulkeUyar && seriUyar;
     });
 
-    galeriRender(filtrelenmis);
+    galeriRender(filtrelenmis, orjinalSeriAdi);
 }
 
-function galeriRender(filmler) {
+function galeriRender(filmler, aktifSeriAdi = "") {
     const galeri = document.getElementById("film-galerisi");
     document.getElementById("liste-sayac").innerText = `${filmler.length} film listelendi`;
     galeri.innerHTML = "";
 
+    // EĞER BİR SERİNİN İÇİNDEYSEK "BU SERİYE EKLE" BUTONU GÖSTER
+    if (aktifSeriAdi !== "") {
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "col-span-full bg-teal-900/20 border border-teal-800 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center mb-2 gap-4";
+        headerDiv.innerHTML = `
+            <h3 class="text-lg font-bold text-teal-400">🎬 ${aktifSeriAdi}</h3>
+            <button onclick="seriyeFilmEkleYonlendir('${aktifSeriAdi}')" class="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg">
+                ➕ Bu Seriye Film Ekle
+            </button>
+        `;
+        galeri.appendChild(headerDiv);
+    }
+
     if (filmler.length === 0) {
-        galeri.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500">Aradığınız kriterlere uygun film bulunamadı.</div>`;
+        galeri.innerHTML += `<div class="col-span-full py-12 text-center text-gray-500">Aradığınız kriterlere uygun film bulunamadı.</div>`;
         return;
     }
 
@@ -188,11 +201,16 @@ function galeriRender(filmler) {
     });
 }
 
+function seriyeFilmEkleYonlendir(seriAdi) {
+    sayfaDegistir('ekle');
+    // Forma serinin adını otomatik yaz
+    document.getElementById('ekle-seri').value = seriAdi;
+}
+
 function serileriCiz() {
     const galeri = document.getElementById("seriler-galerisi");
     galeri.innerHTML = "";
 
-    // Filmleri serilerine göre grupla
     const seriGruplari = {};
     tumFilmler.forEach(f => {
         if (f.seri && f.seri.trim() !== "") {
@@ -210,7 +228,7 @@ function serileriCiz() {
 
     seriİsimleri.forEach(seriAdi => {
         const filmler = seriGruplari[seriAdi];
-        const ilkFilm = filmler[0]; // Kapağı temsil edecek film
+        const ilkFilm = filmler[0];
         const afis = (ilkFilm.afis_yolu && ilkFilm.afis_yolu.startsWith("http")) 
             ? ilkFilm.afis_yolu 
             : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
@@ -218,7 +236,6 @@ function serileriCiz() {
         const kart = document.createElement("div");
         kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative";
         
-        // Tıklandığında Galeri sekmesine gidip o seriyi filtreleyecek
         kart.onclick = () => {
             sayfaDegistir('galeri');
             document.getElementById('arama-input').value = `seri:${seriAdi}`;
@@ -264,8 +281,6 @@ async function tmdbVeriCek() {
             document.getElementById("ekle-afis").value = data.afis_yolu || "";
             if (data.turler) document.getElementById("ekle-turler").value = data.turler.join(", ");
             if (data.ulkeler) document.getElementById("ekle-ulkeler").value = data.ulkeler.join(", ");
-            
-            // YENİ: Otomatik Seri Adı
             if (data.seri) document.getElementById("ekle-seri").value = data.seri;
         }
     } catch (e) {
@@ -290,7 +305,6 @@ function detayGorunumuRender() {
         ? aktifFilm.afis_yolu 
         : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
 
-    // Serisi varsa onu göstermek için küçük bir badge
     const seriBileşeni = (aktifFilm.seri && aktifFilm.seri.trim() !== "") 
         ? `<div class="bg-teal-900/50 border border-teal-800 text-teal-400 text-xs px-2 py-1 rounded inline-block mb-2">🎬 ${aktifFilm.seri}</div>` 
         : "";
@@ -310,14 +324,24 @@ function detayGorunumuRender() {
                 <p class="text-xs text-teal-400 font-semibold">
                     ✅ İzlendi (${aktifFilm.izlenme_tarihi || 'Tarih Yok'})
                 </p>
-                <div class="mt-2">
+                <div class="mt-3">
                     <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Özet</h5>
                     <p class="text-sm text-gray-300 mt-1 leading-relaxed">${aktifFilm.ozet || 'Özet bulunmuyor.'}</p>
                 </div>
+
+                <!-- YENİ: BAYKUŞ GÖRSELLİ KİŞİSEL DÜŞÜNCE ALANI -->
+                <div class="mt-4 bg-gray-900 p-4 rounded-xl border border-teal-900/50 flex gap-4 items-start relative shadow-md">
+                    <img src="logo.jpg" alt="Baykuş" class="w-12 h-12 rounded-full border-2 border-teal-500 shadow-[0_0_10px_rgba(45,212,191,0.3)] z-10 bg-gray-950">
+                    <div class="bg-gray-800 p-3 rounded-2xl rounded-tl-none border border-gray-700 flex-1 relative z-10 shadow-inner">
+                        <h5 class="text-xs font-bold text-teal-400 mb-1">Kişisel Düşüncelerim</h5>
+                        <p class="text-sm text-gray-300 italic whitespace-pre-wrap">${aktifFilm.notlar || 'Bu film için henüz bir düşünce eklemedin. Düzenle butonuna basarak notlarını yazabilirsin.'}</p>
+                    </div>
+                </div>
+
             </div>
         </div>
         <div class="border-t border-gray-800 pt-4 flex justify-end gap-3 mt-4">
-            <button onclick="duzenleGorunumuRender()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm transition">✏️ Düzenle</button>
+            <button onclick="duzenleGorunumuRender()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm transition">✏️ Düzenle / Not Ekle</button>
             <button onclick="filmSil(${aktifFilm.id})" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm transition">🗑️ Sil</button>
         </div>
     `;
@@ -357,7 +381,7 @@ function duzenleGorunumuRender() {
                 <input type="text" id="d-ulkeler" value="${(aktifFilm.ulkeler || []).join(', ')}" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-400">Seri / Koleksiyon Adı (Opsiyonel)</label>
+                <label class="block text-xs text-gray-400">Seri / Koleksiyon Adı</label>
                 <input type="text" id="d-seri" value="${aktifFilm.seri || ''}" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm focus:border-teal-500">
             </div>
             <div>
@@ -366,7 +390,12 @@ function duzenleGorunumuRender() {
             </div>
             <div>
                 <label class="block text-xs text-gray-400">Özet</label>
-                <textarea id="d-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm">${aktifFilm.ozet || ''}</textarea>
+                <textarea id="d-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm focus:border-teal-500">${aktifFilm.ozet || ''}</textarea>
+            </div>
+            <!-- YENİ: DÜZENLEME EKRANI NOTLAR KISMI -->
+            <div>
+                <label class="block text-xs font-semibold text-teal-400 mb-1">🦉 Kişisel Düşüncelerim</label>
+                <textarea id="d-notlar" rows="4" placeholder="Film sende nasıl bir his bıraktı?" class="w-full bg-gray-950 border border-teal-900 rounded p-2 text-sm focus:border-teal-500">${aktifFilm.notlar || ''}</textarea>
             </div>
             <div>
                 <label class="block text-xs text-gray-400">İzlenme Tarihi</label>
@@ -392,6 +421,7 @@ async function filmGuncelle(e) {
         seri: document.getElementById("d-seri").value.trim(),
         afis_yolu: document.getElementById("d-afis").value.trim(),
         ozet: document.getElementById("d-ozet").value.trim(),
+        notlar: document.getElementById("d-notlar").value.trim(), // NOTLAR
         izlendi: true, 
         izlenme_tarihi: document.getElementById("d-tarih").value.trim()
     };
@@ -416,6 +446,11 @@ async function filmSil(id) {
 
 async function filmEkle(e) {
     e.preventDefault();
+    
+    // Güvenlik için elementin sayfada olup olmadığını kontrol ediyoruz
+    const notEl = document.getElementById("ekle-notlar");
+    const ekleNot = notEl ? notEl.value.trim() : "";
+
     const yeniVeri = {
         adi: document.getElementById("ekle-adi").value.trim(),
         yil: document.getElementById("ekle-yil").value.trim(),
@@ -426,6 +461,7 @@ async function filmEkle(e) {
         seri: document.getElementById("ekle-seri").value.trim(),
         afis_yolu: document.getElementById("ekle-afis").value.trim(),
         ozet: document.getElementById("ekle-ozet").value.trim(),
+        notlar: ekleNot, // NOTLAR
         izlendi: true,
         izlenme_tarihi: document.getElementById("ekle-tarih").value.trim()
     };
@@ -447,7 +483,6 @@ function modalKapat() {
 }
 
 function sayfaDegistir(sayfa) {
-    // Sekmeleri Gizle / Göster
     document.getElementById("sec-galeri").classList.toggle("hidden", sayfa !== "galeri");
     document.getElementById("sec-seriler").classList.toggle("hidden", sayfa !== "seriler");
     document.getElementById("sec-ekle").classList.toggle("hidden", sayfa !== "ekle");
@@ -457,7 +492,6 @@ function sayfaDegistir(sayfa) {
         document.getElementById("ekle-tarih").value = bugununTarihi();
     }
 
-    // Buton Renklerini Güncelle
     ["galeri", "seriler", "ekle", "analiz"].forEach(s => {
         const btn = document.getElementById(`nav-${s}`);
         if (s === sayfa) {
@@ -467,7 +501,6 @@ function sayfaDegistir(sayfa) {
         }
     });
 
-    // Sekmeye Göre Ekstra Tetikleyiciler
     if (sayfa === "seriler") {
         serileriCiz();
     }
@@ -516,11 +549,10 @@ function haritaCiz() {
     const haritaKutu = document.getElementById('chart-harita');
     const chart = new google.visualization.GeoChart(haritaKutu);
     
-    // YENİ: Haritaya Tıklama Olayı (Ülke Filtresi)
     google.visualization.events.addListener(chart, 'select', () => {
         const selection = chart.getSelection();
         if (selection.length > 0) {
-            const secilenUlke = data.getValue(selection[0].row, 0); // Tıklanan ülkenin adı
+            const secilenUlke = data.getValue(selection[0].row, 0); 
             sayfaDegistir('galeri');
             document.getElementById('arama-input').value = `ülke:${secilenUlke}`;
             filtrele();
