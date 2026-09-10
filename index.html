@@ -7,11 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <!-- Kelime Bulutu Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.0.1/wordcloud2.min.js"></script>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen">
+<body class="bg-gray-950 text-gray-100 min-h-screen relative pb-16">
 
-    <!-- Dinamik Sabit Header (Scroll ile küçülen logo) -->
-    <header id="ana-header" class="fixed w-full top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300 py-8">
+    <!-- Dinamik Sabit Header -->
+    <header id="ana-header" class="fixed w-full top-0 z-40 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300 py-8">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300">
             
             <div id="marka-alani" class="flex flex-col md:flex-row items-center gap-4 cursor-pointer transition-all duration-300" onclick="sayfaDegistir('galeri')">
@@ -77,13 +79,11 @@
                 <h2 class="text-xl font-bold text-teal-400">➕ Yeni Film Ekle</h2>
             </div>
 
-            <!-- TMDB Arama Çubuğu -->
             <div class="bg-gray-950 p-4 rounded-lg border border-teal-900 mb-6 flex gap-3">
                 <input type="text" id="tmdb-arama" placeholder="Film adını yazın (Örn: Interstellar)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
                 <button type="button" onclick="tmdbVeriCek()" class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Otomatik Doldur</button>
             </div>
             
-            <!-- Manuel / Otomatik Form -->
             <form onsubmit="filmEkle(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Film Adı *</label>
@@ -104,20 +104,20 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Türler (Virgülle ayırın)</label>
-                    <input type="text" id="ekle-turler" placeholder="Aksiyon, Macera" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Türler</label>
+                    <input type="text" id="ekle-turler" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Ülkeler (Virgülle ayırın)</label>
-                    <input type="text" id="ekle-ulkeler" placeholder="ABD, İngiltere" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Ülkeler</label>
+                    <input type="text" id="ekle-ulkeler" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Seri / Koleksiyon Adı (Opsiyonel)</label>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Seri / Koleksiyon Adı</label>
                     <input type="text" id="ekle-seri" placeholder="Örn: Yüzüklerin Efendisi Serisi" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Afiş URL</label>
-                    <input type="text" id="ekle-afis" placeholder="https://..." class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
+                    <input type="text" id="ekle-afis" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-400 mb-1">Özet</label>
@@ -153,7 +153,7 @@
                 </div>
             </div>
 
-            <!-- Tıklanabilir Dünya Haritası -->
+            <!-- Tıklanabilir Harita -->
             <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg">
                 <div class="flex justify-between items-center mb-4">
                     <div>
@@ -163,6 +163,17 @@
                     <span id="top-ulke-sayac" class="text-xs text-teal-400 font-mono">0 Farklı Ülke</span>
                 </div>
                 <div id="chart-harita" style="width: 100%; height: 420px;" class="flex items-center justify-center cursor-pointer"></div>
+            </div>
+
+            <!-- YENİ: METİN MADENCİLİĞİ KELİME BULUTU (Öneri 5) -->
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg">
+                <div class="mb-4">
+                    <h3 class="text-base font-semibold text-teal-400">🧠 Sinematik Zihin Haritası (Kelime Bulutu)</h3>
+                    <p class="text-xs text-gray-400 mt-1">Kişisel notlarınız ve film özetlerinden NLP ile çıkarılan en belirgin kavramlar.</p>
+                </div>
+                <div class="flex justify-center items-center bg-gray-950/70 rounded-xl p-4 border border-gray-800 overflow-hidden min-h-[320px]">
+                    <canvas id="wordcloud-canvas" width="850" height="300"></canvas>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -195,6 +206,42 @@
                 <button onclick="modalKapat()" class="text-gray-400 hover:text-white text-xl">✕</button>
             </div>
             <div id="modal-icerik" class="p-6 overflow-y-auto space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- ================= YENİ: AI BAYKUŞ SOHBET WIDGET'I (Öneri 2) ================= -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <!-- Yuvarlak Tetikleyici Buton -->
+        <button onclick="aiSohbetToggle()" id="ai-toggle-btn" class="w-14 h-14 rounded-full bg-teal-600 hover:bg-teal-500 border-2 border-teal-300 shadow-[0_0_20px_rgba(45,212,191,0.5)] flex items-center justify-center text-2xl transition hover:scale-110">
+            🦉
+        </button>
+
+        <!-- Sohbet Penceresi (Varsayılan kapalı) -->
+        <div id="ai-sohbet-kutu" class="hidden absolute bottom-16 right-0 w-[350px] sm:w-[400px] h-[500px] bg-gray-900 border border-teal-800/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-lg">
+            <!-- Header -->
+            <div class="bg-gray-950 p-3.5 border-b border-gray-800 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <img src="logo.jpg" alt="Baykuş" class="w-7 h-7 rounded-full border border-teal-400">
+                    <div>
+                        <h4 class="text-sm font-bold text-white leading-tight">Film Baykuşu AI</h4>
+                        <span class="text-[10px] text-teal-400 flex items-center gap-1">● Arşivinize Bağlı</span>
+                    </div>
+                </div>
+                <button onclick="aiSohbetToggle()" class="text-gray-400 hover:text-white text-sm">✕</button>
+            </div>
+
+            <!-- Mesaj Listesi -->
+            <div id="ai-mesajlar" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs leading-relaxed">
+                <div class="bg-gray-800/90 text-gray-200 p-3 rounded-xl rounded-tl-none border border-gray-700 max-w-[85%]">
+                    Selam! Ben Film Baykuşu. Arşivindeki filmleri ve kişisel notlarını inceledim. Bugün senin için ne bulmamı istersin?
+                </div>
+            </div>
+
+            <!-- Giriş Alanı -->
+            <div class="p-3 bg-gray-950 border-t border-gray-800 flex gap-2">
+                <input type="text" id="ai-input" onkeydown="if(event.key==='Enter') aiMesajGonder()" placeholder="Örn: 2 saatten kısa gerilim öner..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs focus:border-teal-500 focus:outline-none">
+                <button onclick="aiMesajGonder()" id="ai-gonder-btn" class="bg-teal-600 hover:bg-teal-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition">Gönder</button>
+            </div>
         </div>
     </div>
 
