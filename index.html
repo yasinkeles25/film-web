@@ -9,6 +9,12 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <!-- Kelime Bulutu Kütüphanesi -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.0.1/wordcloud2.min.js"></script>
+    <style>
+        .crisp-img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+    </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen relative pb-16">
 
@@ -209,14 +215,16 @@
         </div>
     </div>
 
-    <!-- ================= SOL ALT KÖŞEYE ALINMIŞ SİNEBOT WIDGET'I ================= -->
+    <!-- ================= SOL ALT KÖŞEYE ALINMIŞ SİNEBOT WIDGET'I (Büyütülmüş ve Netleştirilmiş) ================= -->
     <div class="fixed bottom-6 left-6 z-50 pointer-events-none">
         <!-- Sohbet Penceresi -->
         <div id="ai-sohbet-kutu" class="hidden pointer-events-auto mb-3 w-[340px] sm:w-[380px] h-[480px] bg-gray-900/95 border border-teal-700/80 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden backdrop-blur-md">
             <!-- Header -->
             <div class="bg-gray-950 p-3.5 border-b border-gray-800 flex justify-between items-center">
                 <div class="flex items-center gap-2.5">
-                    <img src="sinebot.png" alt="Sinebot" class="w-8 h-8 rounded-full object-cover border border-teal-400 bg-white">
+                    <div class="w-9 h-9 rounded-full overflow-hidden border border-teal-400 bg-white flex items-center justify-center">
+                        <img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover scale-125 crisp-img">
+                    </div>
                     <div>
                         <h4 class="text-sm font-bold text-white leading-tight">Sinebot AI</h4>
                         <span class="text-[10px] text-teal-400 flex items-center gap-1">● Arşive Bağlı Danışman</span>
@@ -239,9 +247,9 @@
             </div>
         </div>
 
-        <!-- Tetikleyici Maskot Butonu (Özel Görsel) -->
-        <button onclick="aiSohbetToggle()" id="ai-toggle-btn" class="pointer-events-auto w-16 h-16 rounded-full bg-gray-900 border-2 border-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.5)] overflow-hidden transition hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center p-0.5">
-            <img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover rounded-full bg-white">
+        <!-- Tetikleyici Maskot Butonu (Bir tık daha büyük, beyaz çerçevesiz ve net) -->
+        <button onclick="aiSohbetToggle()" id="ai-toggle-btn" class="pointer-events-auto w-20 h-20 rounded-full bg-white border-2 border-teal-400 shadow-[0_0_25px_rgba(45,212,191,0.6)] overflow-hidden transition hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center">
+            <img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover scale-135 crisp-img">
         </button>
     </div>
 
