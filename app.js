@@ -33,7 +33,7 @@ const ulkeSozlugu = {
     'almanya': 'Germany', 'germany': 'Germany', 'de': 'Germany',
     'italya': 'Italy', 'italy': 'Italy', 'it': 'Italy',
     'hollanda': 'Netherlands', 'netherlands': 'Netherlands', 'nl': 'Netherlands',
-    'belçika': 'Belgium', 'belgium': 'Belgium', 'be': 'Belgium',
+    'belçika': 'Belgium', 'belcika': 'Belgium', 'belgium': 'Belgium', 'be': 'Belgium',
     'avusturya': 'Austria', 'austria': 'Austria', 'at': 'Austria',
     'norveç': 'Norway', 'norway': 'Norway', 'no': 'Norway',
     'isveç': 'Sweden', 'sweden': 'Sweden', 'se': 'Sweden',
@@ -530,45 +530,64 @@ function sayfaDegistir(sayfa) {
     else if (sayfa === "analiz") {
         analizCiz();
         haritaCiz();
-        kelimeBulutuCiz(); // YENİ: Metin madenciliği bulutunu çiz
+        // Sekme görünür hale geldikten sonra canvas boyutunu alarak çizim yap
+        setTimeout(() => {
+            kelimeBulutuCiz();
+        }, 150);
     }
 }
 
-// YENİ: KELİME BULUTU ÇİZİCİ (Öneri 5)
+// KELİME BULUTU ÇİZİCİ (Görünürlük ve boyut hesaplaması düzeltildi)
 async function kelimeBulutuCiz() {
     try {
+        const canvas = document.getElementById('wordcloud-canvas');
+        const container = document.getElementById('wordcloud-container');
+        if (!canvas || !container) return;
+
+        // Container genişliğini alıp canvas'a ata
+        const mevcutGenislik = container.clientWidth || 800;
+        canvas.width = Math.min(mevcutGenislik - 20, 850);
+        canvas.height = 320;
+
         const res = await fetch(`${BASE_URL}/analiz/kelime-bulutu`);
         const veri = await res.json();
         
         if (Array.isArray(veri) && veri.length > 0) {
-            const liste = veri.map(item => [item.text, item.weight * 6]); // Boyut çarpanı
-            const canvas = document.getElementById('wordcloud-canvas');
+            // Ağırlık çarpanı
+            const liste = veri.map(item => [item.text, Math.max(item.weight * 7, 14)]);
             
-            WordCloud(canvas, {
-                list: liste,
-                gridSize: 10,
-                weightFactor: 1.5,
-                fontFamily: 'Inter, system-ui, sans-serif',
-                color: (word, weight) => {
-                    const renkler = ['#2dd4bf', '#14b8a6', '#06b6d4', '#38bdf8', '#818cf8', '#a78bfa'];
-                    return renkler[Math.floor(Math.random() * renkler.length)];
-                },
-                backgroundColor: 'transparent',
-                rotateRatio: 0.3,
-                rotationSteps: 2
-            });
+            if (typeof WordCloud === "function") {
+                WordCloud(canvas, {
+                    list: liste,
+                    gridSize: 8,
+                    weightFactor: 1.2,
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    color: () => {
+                        const renkler = ['#2dd4bf', '#14b8a6', '#06b6d4', '#38bdf8', '#818cf8', '#a78bfa', '#f43f5e', '#fbbf24'];
+                        return renkler[Math.floor(Math.random() * renkler.length)];
+                    },
+                    backgroundColor: 'transparent',
+                    rotateRatio: 0.25,
+                    rotationSteps: 2
+                });
+            }
         }
     } catch (e) {
         console.error("Kelime bulutu yükleme hatası:", e);
     }
 }
 
-// YENİ: AI SOHBET WIDGET YÖNETİMİ (Öneri 2)
+// SOL ALTTTAKİ AI SOHBET WIDGET YÖNETİMİ
 function aiSohbetToggle() {
     const kutu = document.getElementById("ai-sohbet-kutu");
+    if (!kutu) return;
+    
     kutu.classList.toggle("hidden");
     if (!kutu.classList.contains("hidden")) {
-        document.getElementById("ai-input").focus();
+        setTimeout(() => {
+            const input = document.getElementById("ai-input");
+            if (input) input.focus();
+        }, 50);
     }
 }
 
@@ -580,7 +599,6 @@ async function aiMesajGonder() {
 
     if (!soru) return;
 
-    // Kullanıcı mesajını ekle
     mesajlar.innerHTML += `
         <div class="flex justify-end">
             <div class="bg-teal-600 text-white p-3 rounded-xl rounded-tr-none max-w-[85%] shadow-md">
@@ -591,7 +609,6 @@ async function aiMesajGonder() {
     input.value = "";
     mesajlar.scrollTop = mesajlar.scrollHeight;
 
-    // Yükleniyor balonu
     const yukleniyorId = `loading-${Date.now()}`;
     mesajlar.innerHTML += `
         <div id="${yukleniyorId}" class="flex justify-start">
@@ -612,7 +629,6 @@ async function aiMesajGonder() {
         });
         const data = await res.json();
 
-        // Yükleniyor balonunu kaldır ve cevabı yaz
         const yukleniyorEl = document.getElementById(yukleniyorId);
         if (yukleniyorEl) yukleniyorEl.remove();
 
