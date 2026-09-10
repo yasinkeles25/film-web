@@ -5,7 +5,6 @@ let tumFilmler = [];
 let aktifFilm = null;
 let charts = {};
 
-// Türkçe 'İ' ve diğer özel karakterleri hatasız küçük harfe dönüştürücü
 function turkceKucult(metin) {
     if (!metin) return "";
     return metin.toString()
@@ -20,100 +19,40 @@ function turkceKucult(metin) {
         .trim();
 }
 
-// Dünyadaki sinema üreten tüm ülkelerin Türkçe/İngilizce çift yönlü GeoChart eşleme sözlüğü
 const ulkeSozlugu = {
-    // Türkiye
     'türkiye': 'Turkey', 'turkiye': 'Turkey', 'turkey': 'Turkey', 'tr': 'Turkey',
-    // ABD & Amerika Kıtası
     'abd': 'United States', 'amerika': 'United States', 'amerika birleşik devletleri': 'United States', 'usa': 'United States', 'united states': 'United States', 'us': 'United States',
     'kanada': 'Canada', 'canada': 'Canada', 'ca': 'Canada',
     'meksika': 'Mexico', 'mexico': 'Mexico', 'mx': 'Mexico',
     'brezilya': 'Brazil', 'brazil': 'Brazil', 'br': 'Brazil',
     'arjantin': 'Argentina', 'argentina': 'Argentina', 'ar': 'Argentina',
     'kolombiya': 'Colombia', 'colombia': 'Colombia', 'co': 'Colombia',
-    'şili': 'Chile', 'sili': 'Chile', 'chile': 'Chile', 'cl': 'Chile',
-    'peru': 'Peru', 'pe': 'Peru',
-    'uruguay': 'Uruguay', 'uy': 'Uruguay',
-    'küba': 'Cuba', 'kuba': 'Cuba', 'cuba': 'Cuba', 'cu': 'Cuba',
-
-    // Avrupa
-    'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'birlesik krallik': 'United Kingdom', 'uk': 'United Kingdom', 'united kingdom': 'United Kingdom', 'great britain': 'United Kingdom', 'gb': 'United Kingdom',
+    'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'uk': 'United Kingdom', 'united kingdom': 'United Kingdom', 'gb': 'United Kingdom',
     'ispanya': 'Spain', 'spain': 'Spain', 'es': 'Spain',
     'fransa': 'France', 'france': 'France', 'fr': 'France',
     'almanya': 'Germany', 'germany': 'Germany', 'de': 'Germany',
     'italya': 'Italy', 'italy': 'Italy', 'it': 'Italy',
     'hollanda': 'Netherlands', 'netherlands': 'Netherlands', 'nl': 'Netherlands',
-    'belçika': 'Belgium', 'belcika': 'Belgium', 'belgium': 'Belgium', 'be': 'Belgium',
-    'isviçre': 'Switzerland', 'isvicre': 'Switzerland', 'switzerland': 'Switzerland', 'ch': 'Switzerland',
+    'belçika': 'Belgium', 'belgium': 'Belgium', 'be': 'Belgium',
     'avusturya': 'Austria', 'austria': 'Austria', 'at': 'Austria',
-    'norveç': 'Norway', 'norvec': 'Norway', 'norway': 'Norway', 'no': 'Norway',
-    'isveç': 'Sweden', 'isvec': 'Sweden', 'sweden': 'Sweden', 'se': 'Sweden',
+    'norveç': 'Norway', 'norway': 'Norway', 'no': 'Norway',
+    'isveç': 'Sweden', 'sweden': 'Sweden', 'se': 'Sweden',
     'danimarka': 'Denmark', 'denmark': 'Denmark', 'dk': 'Denmark',
-    'finlandiya': 'Finland', 'finland': 'Finland', 'fi': 'Finland',
-    'izlanda': 'Iceland', 'iceland': 'Iceland', 'is': 'Iceland',
     'irlanda': 'Ireland', 'ireland': 'Ireland', 'ie': 'Ireland',
     'polonya': 'Poland', 'poland': 'Poland', 'pl': 'Poland',
-    'çekya': 'Czech Republic', 'cekya': 'Czech Republic', 'çek cumhuriyeti': 'Czech Republic', 'czech republic': 'Czech Republic', 'czechia': 'Czech Republic', 'cz': 'Czech Republic',
-    'macaristan': 'Hungary', 'hungary': 'Hungary', 'hu': 'Hungary',
-    'romanya': 'Romania', 'romania': 'Romania', 'ro': 'Romania',
-    'bulgaristan': 'Bulgaria', 'bulgaria': 'Bulgaria', 'bg': 'Bulgaria',
-    'yunanistan': 'Greece', 'greece': 'Greece', 'gr': 'Greece',
-    'portekiz': 'Portugal', 'portugal': 'Portugal', 'pt': 'Portugal',
-    'rusya': 'Russia', 'russia': 'Russia', 'russian federation': 'Russia', 'ru': 'Russia',
-    'ukrayna': 'Ukraine', 'ukraine': 'Ukraine', 'ua': 'Ukraine',
-    'sırbistan': 'Serbia', 'sirbistan': 'Serbia', 'serbia': 'Serbia', 'rs': 'Serbia',
-    'hırvatistan': 'Croatia', 'hirvatistan': 'Croatia', 'croatia': 'Croatia', 'hr': 'Croatia',
-    'bosna hersek': 'Bosnia and Herzegovina', 'bosna-hersek': 'Bosnia and Herzegovina', 'bosnia and herzegovina': 'Bosnia and Herzegovina', 'ba': 'Bosnia and Herzegovina',
-    'slovakya': 'Slovakia', 'slovakia': 'Slovakia', 'sk': 'Slovakia',
-    'slovenya': 'Slovenia', 'slovenia': 'Slovenia', 'si': 'Slovenia',
-    'arnavutluk': 'Albania', 'albania': 'Albania', 'al': 'Albania',
-    'kuzey makedonya': 'North Macedonia', 'makedonya': 'North Macedonia', 'north macedonia': 'North Macedonia', 'mk': 'North Macedonia',
-    'estonya': 'Estonia', 'estonia': 'Estonia', 'ee': 'Estonia',
-    'letonya': 'Latvia', 'latvia': 'Latvia', 'lv': 'Latvia',
-    'litvanya': 'Lithuania', 'lithuania': 'Lithuania', 'lt': 'Lithuania',
-    'gürcistan': 'Georgia', 'gurcistan': 'Georgia', 'georgia': 'Georgia', 'ge': 'Georgia',
-
-    // Asya & Pasifik
-    'güney kore': 'South Korea', 'guney kore': 'South Korea', 'kore': 'South Korea', 'south korea': 'South Korea', 'korea, republic of': 'South Korea', 'kr': 'South Korea',
-    'kuzey kore': 'North Korea', 'north korea': 'North Korea', 'kp': 'North Korea',
+    'rusya': 'Russia', 'russia': 'Russia', 'ru': 'Russia',
+    'sırbistan': 'Serbia', 'serbia': 'Serbia', 'rs': 'Serbia',
+    'güney kore': 'South Korea', 'kore': 'South Korea', 'south korea': 'South Korea', 'kr': 'South Korea',
     'japonya': 'Japan', 'japan': 'Japan', 'jp': 'Japan',
-    'çin': 'China', 'cin': 'China', 'china': 'China', 'cn': 'China',
+    'çin': 'China', 'china': 'China', 'cn': 'China',
     'hong kong': 'Hong Kong', 'hk': 'Hong Kong',
     'tayvan': 'Taiwan', 'taiwan': 'Taiwan', 'tw': 'Taiwan',
     'hindistan': 'India', 'india': 'India', 'in': 'India',
-    'endonezya': 'Indonesia', 'indonesia': 'Indonesia', 'id': 'Indonesia',
-    'tayland': 'Thailand', 'thailand': 'Thailand', 'th': 'Thailand',
-    'vietnam': 'Vietnam', 'vn': 'Vietnam',
-    'malezya': 'Malaysia', 'malaysia': 'Malaysia', 'my': 'Malaysia',
-    'filipinler': 'Philippines', 'philippines': 'Philippines', 'ph': 'Philippines',
-    'singapur': 'Singapore', 'singapore': 'Singapore', 'sg': 'Singapore',
     'avustralya': 'Australia', 'australia': 'Australia', 'au': 'Australia',
-    'yeni zelanda': 'New Zealand', 'yeni zelanda': 'New Zealand', 'new zealand': 'New Zealand', 'nz': 'New Zealand',
-    'pakistan': 'Pakistan', 'pk': 'Pakistan',
-    'bangladeş': 'Bangladesh', 'banglades': 'Bangladesh', 'bd': 'Bangladesh',
-    'kazakistan': 'Kazakhstan', 'kazakhstan': 'Kazakhstan', 'kz': 'Kazakhstan',
-    'özbekistan': 'Uzbekistan', 'ozbekistan': 'Uzbekistan', 'uz': 'Uzbekistan',
-    'azerbaycan': 'Azerbaijan', 'azerbaijan': 'Azerbaijan', 'az': 'Azerbaijan',
-
-    // Orta Doğu & Afrika
-    'iran': 'Iran', 'iran, islamic republic of': 'Iran', 'ir': 'Iran',
-    'israil': 'Israel', 'israel': 'Israel', 'il': 'Israel',
-    'filistin': 'Palestine', 'palestine': 'Palestine', 'ps': 'Palestine',
-    'suudi arabistan': 'Saudi Arabia', 'saudi arabia': 'Saudi Arabia', 'sa': 'Saudi Arabia',
-    'birleşik arap emirlikleri': 'United Arab Emirates', 'bae': 'United Arab Emirates', 'united arab emirates': 'United Arab Emirates', 'ae': 'United Arab Emirates',
-    'katar': 'Qatar', 'qatar': 'Qatar', 'qa': 'Qatar',
-    'lübnan': 'Lebanon', 'lubnan': 'Lebanon', 'lebanon': 'Lebanon', 'lb': 'Lebanon',
-    'ürdün': 'Jordan', 'urdun': 'Jordan', 'jordan': 'Jordan', 'jo': 'Jordan',
-    'ırak': 'Iraq', 'irak': 'Iraq', 'iraq': 'Iraq', 'iq': 'Iraq',
-    'suriye': 'Syria', 'syria': 'Syria', 'sy': 'Syria',
-    'mısır': 'Egypt', 'misir': 'Egypt', 'egypt': 'Egypt', 'eg': 'Egypt',
+    'iran': 'Iran', 'ir': 'Iran',
     'fas': 'Morocco', 'morocco': 'Morocco', 'ma': 'Morocco',
-    'cezayir': 'Algeria', 'algeria': 'Algeria', 'dz': 'Algeria',
-    'tunus': 'Tunisia', 'tunisia': 'Tunisia', 'tn': 'Tunisia',
-    'libya': 'Libya', 'ly': 'Libya',
-    'güney afrika': 'South Africa', 'guney afrika': 'South Africa', 'south africa': 'South Africa', 'za': 'South Africa',
-    'nijerya': 'Nigeria', 'nigeria': 'Nigeria', 'ng': 'Nigeria',
-    'kenya': 'Kenya', 'ke': 'Kenya'
+    'lübnan': 'Lebanon', 'lebanon': 'Lebanon', 'lb': 'Lebanon',
+    'libya': 'Libya', 'ly': 'Libya'
 };
 
 google.charts.load('current', {'packages':['geochart']});
@@ -417,7 +356,6 @@ function detayGorunumuRender() {
                     <p class="text-sm text-gray-300 mt-1 leading-relaxed">${aktifFilm.ozet || 'Özet bulunmuyor.'}</p>
                 </div>
 
-                <!-- BAYKUŞ GÖRSELLİ KİŞİSEL DÜŞÜNCE ALANI -->
                 <div class="mt-4 bg-gray-900 p-4 rounded-xl border border-teal-900/50 flex gap-4 items-start relative shadow-md">
                     <img src="logo.jpg" alt="Baykuş" class="w-12 h-12 rounded-full border-2 border-teal-500 shadow-[0_0_10px_rgba(45,212,191,0.3)] z-10 bg-gray-950">
                     <div class="bg-gray-800 p-3 rounded-2xl rounded-tl-none border border-gray-700 flex-1 relative z-10 shadow-inner">
@@ -592,6 +530,110 @@ function sayfaDegistir(sayfa) {
     else if (sayfa === "analiz") {
         analizCiz();
         haritaCiz();
+        kelimeBulutuCiz(); // YENİ: Metin madenciliği bulutunu çiz
+    }
+}
+
+// YENİ: KELİME BULUTU ÇİZİCİ (Öneri 5)
+async function kelimeBulutuCiz() {
+    try {
+        const res = await fetch(`${BASE_URL}/analiz/kelime-bulutu`);
+        const veri = await res.json();
+        
+        if (Array.isArray(veri) && veri.length > 0) {
+            const liste = veri.map(item => [item.text, item.weight * 6]); // Boyut çarpanı
+            const canvas = document.getElementById('wordcloud-canvas');
+            
+            WordCloud(canvas, {
+                list: liste,
+                gridSize: 10,
+                weightFactor: 1.5,
+                fontFamily: 'Inter, system-ui, sans-serif',
+                color: (word, weight) => {
+                    const renkler = ['#2dd4bf', '#14b8a6', '#06b6d4', '#38bdf8', '#818cf8', '#a78bfa'];
+                    return renkler[Math.floor(Math.random() * renkler.length)];
+                },
+                backgroundColor: 'transparent',
+                rotateRatio: 0.3,
+                rotationSteps: 2
+            });
+        }
+    } catch (e) {
+        console.error("Kelime bulutu yükleme hatası:", e);
+    }
+}
+
+// YENİ: AI SOHBET WIDGET YÖNETİMİ (Öneri 2)
+function aiSohbetToggle() {
+    const kutu = document.getElementById("ai-sohbet-kutu");
+    kutu.classList.toggle("hidden");
+    if (!kutu.classList.contains("hidden")) {
+        document.getElementById("ai-input").focus();
+    }
+}
+
+async function aiMesajGonder() {
+    const input = document.getElementById("ai-input");
+    const mesajlar = document.getElementById("ai-mesajlar");
+    const btn = document.getElementById("ai-gonder-btn");
+    const soru = input.value.trim();
+
+    if (!soru) return;
+
+    // Kullanıcı mesajını ekle
+    mesajlar.innerHTML += `
+        <div class="flex justify-end">
+            <div class="bg-teal-600 text-white p-3 rounded-xl rounded-tr-none max-w-[85%] shadow-md">
+                ${soru}
+            </div>
+        </div>
+    `;
+    input.value = "";
+    mesajlar.scrollTop = mesajlar.scrollHeight;
+
+    // Yükleniyor balonu
+    const yukleniyorId = `loading-${Date.now()}`;
+    mesajlar.innerHTML += `
+        <div id="${yukleniyorId}" class="flex justify-start">
+            <div class="bg-gray-800 text-gray-400 p-3 rounded-xl rounded-tl-none border border-gray-700 max-w-[85%] italic flex items-center gap-2">
+                <span class="animate-bounce">🦉</span> Arşiv taranıyor ve düşünülüyor...
+            </div>
+        </div>
+    `;
+    mesajlar.scrollTop = mesajlar.scrollHeight;
+
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${BASE_URL}/ai/sohbet`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ soru: soru })
+        });
+        const data = await res.json();
+
+        // Yükleniyor balonunu kaldır ve cevabı yaz
+        const yukleniyorEl = document.getElementById(yukleniyorId);
+        if (yukleniyorEl) yukleniyorEl.remove();
+
+        mesajlar.innerHTML += `
+            <div class="flex justify-start">
+                <div class="bg-gray-800 text-gray-200 p-3 rounded-xl rounded-tl-none border border-teal-900/60 max-w-[85%] whitespace-pre-wrap shadow-md">
+                    ${data.cevap || 'Yanıt alınamadı.'}
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        const yukleniyorEl = document.getElementById(yukleniyorId);
+        if (yukleniyorEl) yukleniyorEl.remove();
+        mesajlar.innerHTML += `
+            <div class="bg-red-950/80 text-red-300 p-3 rounded-xl rounded-tl-none border border-red-800">
+                Sunucu ile bağlantı kurulamadı.
+            </div>
+        `;
+    } finally {
+        btn.disabled = false;
+        mesajlar.scrollTop = mesajlar.scrollHeight;
     }
 }
 
