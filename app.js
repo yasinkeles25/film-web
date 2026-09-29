@@ -25,6 +25,8 @@ const temaEmojileri = {
 };
 
 let ozelEklenenTemalar = JSON.parse(localStorage.getItem("film_baykusu_ozel_temalar") || "{}");
+// YENİ EKLENDİ: Boş serileri de tutmak için
+let ozelEklenenSeriler = JSON.parse(localStorage.getItem("film_baykusu_ozel_seriler") || "[]");
 
 // History API: Geri tuşuyla siteden atılmayı engeller
 window.addEventListener("popstate", (e) => {
@@ -105,12 +107,16 @@ async function verileriYukle(denemeSayisi = 1, gorselYenile = true) {
 function dropdownlariDoldur() {
     const turlerSet = new Set();
     const yillarSet = new Set();
-    const serilerSet = new Set();
+    
+    // Seriler ve Temalar için listeleri hazırla
+    const serilerSet = new Set([...ozelEklenenSeriler]);
+    const temalarSet = new Set([...Object.keys(temaEmojileri), ...Object.keys(ozelEklenenTemalar)]);
 
     tumFilmler.forEach(f => {
         if (Array.isArray(f.turler)) f.turler.forEach(t => t.split(/[,/&]/).forEach(p => { const temiz = p.trim(); if (temiz) turlerSet.add(temiz.charAt(0).toUpperCase() + temiz.slice(1).toLowerCase()); }));
         if (f.yil && f.yil.trim()) yillarSet.add(f.yil.trim());
         if (f.seri && f.seri.trim()) serilerSet.add(f.seri.trim());
+        if (f.temalar && f.temalar.trim()) f.temalar.split(",").forEach(t => { if(t.trim()) temalarSet.add(t.trim()); });
     });
 
     const turSelect = document.getElementById("tur-filtre");
@@ -125,6 +131,12 @@ function dropdownlariDoldur() {
     if(serilerDatalist) {
         serilerDatalist.innerHTML = "";
         Array.from(serilerSet).sort().forEach(s => { serilerDatalist.innerHTML += `<option value="${s}">`; });
+    }
+
+    const temalarDatalist = document.getElementById("mevcut-temalar-listesi");
+    if(temalarDatalist) {
+        temalarDatalist.innerHTML = "";
+        Array.from(temalarSet).sort().forEach(t => { temalarDatalist.innerHTML += `<option value="${t}">`; });
     }
 }
 
@@ -324,31 +336,34 @@ async function mevcutFilmKaydet() {
 function serileriCiz() {
     const galeri = document.getElementById("seriler-galerisi");
     galeri.innerHTML = "";
-    const seriGruplari = {};
-    tumFilmler.forEach(f => {
-        if (f.seri && f.seri.trim() !== "") {
-            if (!seriGruplari[f.seri]) seriGruplari[f.seri] = [];
-            seriGruplari[f.seri].push(f);
-        }
-    });
-    const seriİsimleri = Object.keys(seriGruplari).sort();
     
-    if (seriİsimleri.length === 0) {
-        galeri.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500">Henüz seriye ait film yok.</div>`;
+    // Tüm seriler listesi (Özel eklenen boş seriler dahil)
+    const tumSerilerListesi = new Set([...ozelEklenenSeriler]);
+    tumFilmler.forEach(f => {
+        if (f.seri && f.seri.trim() !== "") tumSerilerListesi.add(f.seri.trim());
+    });
+    
+    if (tumSerilerListesi.size === 0) {
+        galeri.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500">Henüz seriye ait film veya koleksiyon yok.</div>`;
         return;
     }
 
-    seriİsimleri.forEach(seriAdi => {
-        const filmler = seriGruplari[seriAdi];
-        const afis = (filmler[0].afis_yolu && filmler[0].afis_yolu.startsWith("http")) ? filmler[0].afis_yolu : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
+    Array.from(tumSerilerListesi).sort().forEach(seriAdi => {
+        const seriFilmleri = tumFilmler.filter(f => f.seri && turkceKucult(f.seri).includes(turkceKucult(seriAdi)));
+        
+        let afis = "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok";
+        if (seriFilmleri.length > 0 && seriFilmleri[0].afis_yolu && seriFilmleri[0].afis_yolu.startsWith("http")) {
+            afis = seriFilmleri[0].afis_yolu;
+        }
+
         const kart = document.createElement("div");
         kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative group";
         kart.onclick = () => { sayfaDegistir('galeri'); document.getElementById('arama-input').value = `seri:${seriAdi}`; filtrele(); };
         kart.innerHTML = `
-            <img src="${afis}" alt="${seriAdi}" class="w-full h-48 object-cover opacity-50 group-hover:opacity-80 transition">
+            <img src="${afis}" alt="${seriAdi}" class="w-full h-48 object-cover opacity-50 group-hover:opacity-80 transition" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok';">
             <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent p-4 flex flex-col justify-end">
                 <h4 class="font-bold text-sm text-white drop-shadow-md">${seriAdi}</h4>
-                <p class="text-xs text-teal-400 mt-1 font-semibold">${filmler.length} Film</p>
+                <p class="text-xs text-teal-400 mt-1 font-semibold">${seriFilmleri.length} Film</p>
             </div>
         `;
         galeri.appendChild(kart);
@@ -377,7 +392,7 @@ function temalariCiz() {
         });
 
         let afis = "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok";
-        if (temaFilmleri.length > 0 && temaFilmleri[0].afis_yolu) {
+        if (temaFilmleri.length > 0 && temaFilmleri[0].afis_yolu && temaFilmleri[0].afis_yolu.startsWith("http")) {
             afis = temaFilmleri[0].afis_yolu;
         }
 
@@ -386,7 +401,7 @@ function temalariCiz() {
         kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative group";
         kart.onclick = () => { sayfaDegistir('galeri'); document.getElementById('arama-input').value = `tema:${temaAdi}`; filtrele(); };
         kart.innerHTML = `
-            <img src="${afis}" alt="${temaAdi}" class="w-full h-48 object-cover opacity-30 group-hover:opacity-60 transition">
+            <img src="${afis}" alt="${temaAdi}" class="w-full h-48 object-cover opacity-30 group-hover:opacity-60 transition" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok';">
             <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent p-4 flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-3xl drop-shadow-lg">${emoji}</span>
@@ -413,7 +428,20 @@ function yeniTemaKaydet(e) {
     yeniTemaModalKapat(); temalariCiz(); e.target.reset();
 }
 
-// YENİ EKLENDİ: TMDB ÇOKLU SONUÇ ÇEKME VE SEÇME
+// YENİ EKLENDİ: Yeni Seri Oluşturma Modalı JS
+function yeniSeriModalAc() { document.getElementById("yeni-seri-modal").classList.remove("hidden"); document.getElementById("yeni-seri-adi").focus(); }
+function yeniSeriModalKapat() { document.getElementById("yeni-seri-modal").classList.add("hidden"); }
+function yeniSeriKaydet(e) {
+    e.preventDefault();
+    const ad = document.getElementById("yeni-seri-adi").value.trim();
+    if (!ad) return;
+    if(!ozelEklenenSeriler.includes(ad)) {
+        ozelEklenenSeriler.push(ad);
+        localStorage.setItem("film_baykusu_ozel_seriler", JSON.stringify(ozelEklenenSeriler));
+    }
+    yeniSeriModalKapat(); serileriCiz(); e.target.reset();
+}
+
 async function tmdbVeriCek() {
     const arama = document.getElementById("tmdb-arama").value.trim();
     if (!arama) return alert("Lütfen film adı yazın!");
@@ -434,24 +462,18 @@ async function tmdbVeriCek() {
                 listeDiv.innerHTML += `
                     <div onclick="tmdbFilmSec(${film.tmdb_id})" class="flex gap-4 items-center bg-gray-950 p-3 rounded-lg border border-gray-800 hover:border-teal-500 cursor-pointer transition">
                         <img src="${afis}" class="w-12 h-16 object-cover rounded">
-                        <div>
-                            <h4 class="text-sm font-bold text-gray-200">${film.adi}</h4>
-                            <span class="text-xs text-teal-400">${film.yil}</span>
-                        </div>
+                        <div><h4 class="text-sm font-bold text-gray-200">${film.adi}</h4><span class="text-xs text-teal-400">${film.yil}</span></div>
                     </div>
                 `;
             });
             document.getElementById("tmdb-secim-modal").classList.remove("hidden");
-        } else {
-            alert("Film bulunamadı!");
-        }
+        } else { alert("Film bulunamadı!"); }
     } catch (e) { alert("Bağlantı hatası."); } finally { buton.innerText = orjinalMetin; buton.disabled = false; }
 }
 
 async function tmdbFilmSec(tmdb_id) {
     document.getElementById("tmdb-secim-modal").classList.add("hidden");
     const buton = document.querySelector("button[onclick='tmdbVeriCek()']");
-    const orjinalMetin = buton.innerText;
     buton.innerText = "⏳ Dolduruluyor..."; buton.disabled = true;
 
     try {
@@ -508,7 +530,7 @@ function detayGorunumuRender() {
     if (aktifFilm.temalar && aktifFilm.temalar.trim() !== "") {
         const temalarDizi = aktifFilm.temalar.split(",").map(t => t.trim());
         temaBileşeni = temalarDizi.map(t => {
-            const emoji = temaEmojileri[t] || ozelEklenenTemalar[t] || "🏷️";
+            const emoji = temaEmojileri[t] || ozelEklenenTemalar[t] || "🏷️️";
             return `<span class="bg-gray-800 border border-gray-700 text-gray-300 text-[10px] px-2 py-0.5 rounded-full mr-1 inline-flex items-center gap-1 mb-1">${emoji} ${t} <button onclick="temaCikar('${t}')" class="text-red-400 hover:text-red-300 font-bold ml-1" title="Temadan Çıkar">✕</button></span>`;
         }).join('');
     }
@@ -558,7 +580,7 @@ function duzenleGorunumuRender() {
                 <div><label class="block text-xs text-gray-400">Seri</label><input type="text" id="d-seri" list="mevcut-seriler-listesi" value="${aktifFilm.seri || ''}" class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm"></div>
                 <div>
                     <label class="block text-xs text-teal-400 font-bold">🏷️ Temalar</label>
-                    <input type="text" id="d-temalar" value="${aktifFilm.temalar || ''}" class="w-full bg-gray-950 border border-teal-900 rounded p-2 text-sm focus:border-teal-500">
+                    <input type="text" id="d-temalar" list="mevcut-temalar-listesi" value="${aktifFilm.temalar || ''}" class="w-full bg-gray-950 border border-teal-900 rounded p-2 text-sm focus:border-teal-500">
                     <div id="hizli-temalar-duzenle" class="flex flex-wrap gap-1 mt-2"></div>
                 </div>
             </div>
