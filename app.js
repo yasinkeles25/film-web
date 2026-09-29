@@ -25,19 +25,41 @@ const temaEmojileri = {
 };
 
 let ozelEklenenTemalar = JSON.parse(localStorage.getItem("film_baykusu_ozel_temalar") || "{}");
-// YENİ EKLENDİ: Boş serileri de tutmak için
 let ozelEklenenSeriler = JSON.parse(localStorage.getItem("film_baykusu_ozel_seriler") || "[]");
 
-// History API: Geri tuşuyla siteden atılmayı engeller
+// Toast Bildirim Sistemi (Alert Yerine Kullanılır)
+function bildirimGoster(mesaj, tip = "basari") {
+    const toast = document.getElementById("toast-kutu");
+    const ikon = document.getElementById("toast-ikon");
+    const mesajEl = document.getElementById("toast-mesaj");
+    
+    ikon.innerText = tip === "basari" ? "✅" : (tip === "hata" ? "⚠️" : "ℹ️");
+    mesajEl.innerText = mesaj;
+    
+    if(tip === "hata") { toast.classList.replace("bg-teal-600", "bg-red-600"); toast.classList.replace("border-teal-400/50", "border-red-400/50"); }
+    else { toast.classList.replace("bg-red-600", "bg-teal-600"); toast.classList.replace("border-red-400/50", "border-teal-400/50"); }
+
+    toast.classList.remove("toast-enter");
+    toast.classList.add("toast-active");
+    setTimeout(() => { toast.classList.remove("toast-active"); toast.classList.add("toast-enter"); }, 3500);
+}
+
+// History API (Geri Tuşu)
 window.addEventListener("popstate", (e) => {
-    if (e.state && e.state.sayfa) {
-        sayfaDegistir(e.state.sayfa, false);
-    } else {
+    if (e.state && e.state.sayfa) sayfaDegistir(e.state.sayfa, false);
+    else {
         const hash = window.location.hash.replace("#", "");
         if(["galeri", "temalar", "seriler", "ekle", "analiz"].includes(hash)) sayfaDegistir(hash, false);
         else sayfaDegistir('galeri', false);
     }
 });
+
+// STANDARTLAŞTIRMA (Normalization)
+function turNormallestir(t) {
+    let temiz = t.trim().toLowerCase();
+    if(temiz === "bilim-kurgu" || temiz === "bilimkurgu" || temiz === "sci-fi") return "Bilim Kurgu";
+    return t.trim().charAt(0).toUpperCase() + t.trim().slice(1).toLowerCase();
+}
 
 function turkceKucult(metin) {
     if (!metin) return "";
@@ -46,38 +68,11 @@ function turkceKucult(metin) {
 
 const ulkeSozlugu = {
     'türkiye': 'Turkey', 'turkiye': 'Turkey', 'turkey': 'Turkey', 'tr': 'Turkey',
-    'abd': 'United States', 'amerika': 'United States', 'amerika birleşik devletleri': 'United States', 'usa': 'United States', 'united states': 'United States', 'us': 'United States',
-    'kanada': 'Canada', 'canada': 'Canada', 'ca': 'Canada',
-    'meksika': 'Mexico', 'mexico': 'Mexico', 'mx': 'Mexico',
-    'brezilya': 'Brazil', 'brazil': 'Brazil', 'br': 'Brazil',
-    'arjantin': 'Argentina', 'argentina': 'Argentina', 'ar': 'Argentina',
-    'kolombiya': 'Colombia', 'colombia': 'Colombia', 'co': 'Colombia',
-    'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'uk': 'United Kingdom', 'united kingdom': 'United Kingdom', 'gb': 'United Kingdom',
-    'ispanya': 'Spain', 'spain': 'Spain', 'es': 'Spain',
-    'fransa': 'France', 'france': 'France', 'fr': 'France',
-    'almanya': 'Germany', 'germany': 'Germany', 'de': 'Germany',
-    'italya': 'Italy', 'italy': 'Italy', 'it': 'Italy',
-    'hollanda': 'Netherlands', 'netherlands': 'Netherlands', 'nl': 'Netherlands',
-    'belçika': 'Belgium', 'belgium': 'Belgium', 'be': 'Belgium',
-    'avusturya': 'Austria', 'austria': 'Austria', 'at': 'Austria',
-    'norveç': 'Norway', 'norway': 'Norway', 'no': 'Norway',
-    'isveç': 'Sweden', 'sweden': 'Sweden', 'se': 'Sweden',
-    'danimarka': 'Denmark', 'denmark': 'Denmark', 'dk': 'Denmark',
-    'irlanda': 'Ireland', 'ireland': 'Ireland', 'ie': 'Ireland',
-    'polonya': 'Poland', 'poland': 'Poland', 'pl': 'Poland',
-    'rusya': 'Russia', 'russia': 'Russia', 'ru': 'Russia',
-    'sırbistan': 'Serbia', 'serbia': 'Serbia', 'rs': 'Serbia',
-    'güney kore': 'South Korea', 'kore': 'South Korea', 'south korea': 'South Korea', 'kr': 'South Korea',
-    'japonya': 'Japan', 'japan': 'Japan', 'jp': 'Japan',
-    'çin': 'China', 'china': 'China', 'cn': 'China',
-    'hong kong': 'Hong Kong', 'hk': 'Hong Kong',
-    'tayvan': 'Taiwan', 'taiwan': 'Taiwan', 'tw': 'Taiwan',
-    'hindistan': 'India', 'india': 'India', 'in': 'India',
-    'avustralya': 'Australia', 'australia': 'Australia', 'au': 'Australia',
-    'iran': 'Iran', 'ir': 'Iran',
-    'fas': 'Morocco', 'morocco': 'Morocco', 'ma': 'Morocco',
-    'lübnan': 'Lebanon', 'lebanon': 'Lebanon', 'lb': 'Lebanon',
-    'libya': 'Libya', 'ly': 'Libya'
+    'abd': 'United States', 'amerika': 'United States', 'usa': 'United States', 'us': 'United States',
+    'kanada': 'Canada', 'meksika': 'Mexico', 'brezilya': 'Brazil', 'arjantin': 'Argentina',
+    'ingiltere': 'United Kingdom', 'birleşik krallık': 'United Kingdom', 'uk': 'United Kingdom',
+    'ispanya': 'Spain', 'fransa': 'France', 'almanya': 'Germany', 'italya': 'Italy',
+    'güney kore': 'South Korea', 'kore': 'South Korea', 'japonya': 'Japan', 'çin': 'China', 'hindistan': 'India'
 };
 
 google.charts.load('current', {'packages':['geochart']});
@@ -94,7 +89,20 @@ async function verileriYukle(denemeSayisi = 1, gorselYenile = true) {
     try {
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error("Sunucu yanıt vermedi");
-        tumFilmler = await res.json();
+        
+        let hamVeri = await res.json();
+        // Türleri veritabanından çekerken anında "Bilim Kurgu" standartına oturt
+        tumFilmler = hamVeri.map(f => {
+            if(f.turler) {
+                let duzgunTurler = new Set();
+                f.turler.forEach(t => t.split(/[,/&]/).forEach(p => {
+                    if(p.trim()) duzgunTurler.add(turNormallestir(p));
+                }));
+                f.turler = Array.from(duzgunTurler);
+            }
+            return f;
+        });
+
         dropdownlariDoldur();
         filtrele();
     } catch (e) {
@@ -107,13 +115,11 @@ async function verileriYukle(denemeSayisi = 1, gorselYenile = true) {
 function dropdownlariDoldur() {
     const turlerSet = new Set();
     const yillarSet = new Set();
-    
-    // Seriler ve Temalar için listeleri hazırla
     const serilerSet = new Set([...ozelEklenenSeriler]);
     const temalarSet = new Set([...Object.keys(temaEmojileri), ...Object.keys(ozelEklenenTemalar)]);
 
     tumFilmler.forEach(f => {
-        if (Array.isArray(f.turler)) f.turler.forEach(t => t.split(/[,/&]/).forEach(p => { const temiz = p.trim(); if (temiz) turlerSet.add(temiz.charAt(0).toUpperCase() + temiz.slice(1).toLowerCase()); }));
+        if (Array.isArray(f.turler)) f.turler.forEach(t => turlerSet.add(t));
         if (f.yil && f.yil.trim()) yillarSet.add(f.yil.trim());
         if (f.seri && f.seri.trim()) serilerSet.add(f.seri.trim());
         if (f.temalar && f.temalar.trim()) f.temalar.split(",").forEach(t => { if(t.trim()) temalarSet.add(t.trim()); });
@@ -128,16 +134,10 @@ function dropdownlariDoldur() {
     Array.from(yillarSet).sort((a, b) => b - a).forEach(yil => yilSelect.innerHTML += `<option value="${yil}">${yil}</option>`);
 
     const serilerDatalist = document.getElementById("mevcut-seriler-listesi");
-    if(serilerDatalist) {
-        serilerDatalist.innerHTML = "";
-        Array.from(serilerSet).sort().forEach(s => { serilerDatalist.innerHTML += `<option value="${s}">`; });
-    }
+    if(serilerDatalist) { serilerDatalist.innerHTML = ""; Array.from(serilerSet).sort().forEach(s => { serilerDatalist.innerHTML += `<option value="${s}">`; }); }
 
     const temalarDatalist = document.getElementById("mevcut-temalar-listesi");
-    if(temalarDatalist) {
-        temalarDatalist.innerHTML = "";
-        Array.from(temalarSet).sort().forEach(t => { temalarDatalist.innerHTML += `<option value="${t}">`; });
-    }
+    if(temalarDatalist) { temalarDatalist.innerHTML = ""; Array.from(temalarSet).sort().forEach(t => { temalarDatalist.innerHTML += `<option value="${t}">`; }); }
 }
 
 function hizliTemalariRenderEt(hedefDivId, inputId) {
@@ -160,10 +160,7 @@ function hizliTemalariRenderEt(hedefDivId, inputId) {
         btn.onclick = () => {
             const input = document.getElementById(inputId);
             let val = input.value.split(",").map(x=>x.trim()).filter(Boolean);
-            if(!val.includes(t)) {
-                val.push(t);
-                input.value = val.join(", ");
-            }
+            if(!val.includes(t)) { val.push(t); input.value = val.join(", "); }
         };
         div.appendChild(btn);
     });
@@ -174,6 +171,7 @@ function aramaSifirla() {
     document.getElementById("tur-filtre").value = "Tümü";
     document.getElementById("yil-filtre").value = "Tümü";
     document.getElementById("puan-filtre").value = "0";
+    document.getElementById("siralama").value = "isim-asc";
     filtrele();
 }
 
@@ -183,19 +181,16 @@ function filtrele() {
     const secilenTur = document.getElementById("tur-filtre").value;
     const secilenYil = document.getElementById("yil-filtre").value;
     const minPuan = parseFloat(document.getElementById("puan-filtre").value);
+    const siralamaTip = document.getElementById("siralama") ? document.getElementById("siralama").value : "isim-asc";
 
     let arananKelime = aramaInput;
     let ozelUlke = "", ozelSeri = "", ozelTema = "", orjinalSeriAdi = "", orjinalTemaAdi = "";
 
-    if (aramaInput.startsWith("ülke:") || aramaInput.startsWith("ulke:")) {
-        ozelUlke = turkceKucult(aramaHam.split(":")[1]); arananKelime = "";
-    } else if (aramaInput.startsWith("seri:")) {
-        ozelSeri = turkceKucult(aramaHam.split(":")[1]); arananKelime = "";
-    } else if (aramaInput.startsWith("tema:")) {
-        ozelTema = turkceKucult(aramaHam.split(":")[1]); orjinalTemaAdi = aramaHam.split(":")[1].trim(); arananKelime = "";
-    }
+    if (aramaInput.startsWith("ülke:") || aramaInput.startsWith("ulke:")) { ozelUlke = turkceKucult(aramaHam.split(":")[1]); arananKelime = ""; } 
+    else if (aramaInput.startsWith("seri:")) { ozelSeri = turkceKucult(aramaHam.split(":")[1]); arananKelime = ""; } 
+    else if (aramaInput.startsWith("tema:")) { ozelTema = turkceKucult(aramaHam.split(":")[1]); orjinalTemaAdi = aramaHam.split(":")[1].trim(); arananKelime = ""; }
 
-    const filtrelenmis = tumFilmler.filter(film => {
+    let filtrelenmis = tumFilmler.filter(film => {
         const adiUyar = arananKelime === "" || turkceKucult(film.adi).includes(arananKelime);
         const puanUyar = (film.puan || 0) >= minPuan;
         const yilUyar = (secilenYil === "Tümü") || (film.yil && film.yil.toString() === secilenYil);
@@ -226,8 +221,15 @@ function filtrele() {
                 if (filmTemalariKucuk.includes(ozelTema) || filmTemalariKucuk.includes(temaKoku)) temaUyar = true;
             }
         }
-
         return adiUyar && puanUyar && turUyar && yilUyar && ulkeUyar && seriUyar && temaUyar;
+    });
+
+    // SIRALAMA MANTIĞI EKLENDİ
+    filtrelenmis.sort((a, b) => {
+        if(siralamaTip === "puan-desc") return (b.puan || 0) - (a.puan || 0);
+        if(siralamaTip === "yil-desc") return parseInt(b.yil || 0) - parseInt(a.yil || 0);
+        if(siralamaTip === "sure-asc") return (a.sure || 0) - (b.sure || 0);
+        return a.adi.localeCompare(b.adi, 'tr'); // Varsayılan İsim (A-Z)
     });
 
     galeriRender(filtrelenmis, orjinalSeriAdi, orjinalTemaAdi);
@@ -276,7 +278,7 @@ function galeriRender(filmler, aktifSeriAdi = "", aktifTemaAdi = "") {
         kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500/50 hover:scale-105 transition cursor-pointer flex flex-col justify-between";
         kart.onclick = () => filmDetayAc(film.id);
         kart.innerHTML = `
-            <img src="${afis}" alt="${film.adi}" class="w-full h-72 object-cover" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok';">
+            <img src="${afis}" loading="lazy" alt="${film.adi}" class="w-full h-72 object-cover" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok';">
             <div class="p-3"><h4 class="font-bold text-sm truncate text-gray-100">${film.adi}</h4><div class="flex justify-between items-center text-xs text-gray-400 mt-1"><span>📅 ${film.yil || '?'}</span><span class="text-teal-400 font-semibold">⭐ ${film.puan || '0.0'}</span></div></div>
         `;
         galeri.appendChild(kart);
@@ -315,14 +317,13 @@ function mevcutFilmEkleAc(tip, isim) {
 async function mevcutFilmKaydet() {
     const select = document.getElementById("mevcut-film-secim");
     const filmId = select.value;
-    if(!filmId) return alert("Lütfen listeden bir film seçin.");
+    if(!filmId) return bildirimGoster("Lütfen listeden bir film seçin.", "hata");
     
     const film = tumFilmler.find(f => f.id == filmId);
     if(!film) return;
 
-    if (aktifMevcutEklemeTipi === 'seri') {
-        film.seri = aktifMevcutEklemeIsmi;
-    } else if (aktifMevcutEklemeTipi === 'tema') {
+    if (aktifMevcutEklemeTipi === 'seri') film.seri = aktifMevcutEklemeIsmi;
+    else if (aktifMevcutEklemeTipi === 'tema') {
         const temalarList = film.temalar ? film.temalar.split(",").map(t => t.trim()).filter(Boolean) : [];
         if (!temalarList.includes(aktifMevcutEklemeIsmi)) temalarList.push(aktifMevcutEklemeIsmi);
         film.temalar = temalarList.join(", ");
@@ -330,6 +331,7 @@ async function mevcutFilmKaydet() {
 
     document.getElementById("mevcut-film-modal").classList.add("hidden");
     await fetch(`${API_URL}/${film.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(film) });
+    bildirimGoster("Film arşivi listeye başarıyla aktarıldı!");
     verileriYukle(1, false); 
 }
 
@@ -337,11 +339,8 @@ function serileriCiz() {
     const galeri = document.getElementById("seriler-galerisi");
     galeri.innerHTML = "";
     
-    // Tüm seriler listesi (Özel eklenen boş seriler dahil)
     const tumSerilerListesi = new Set([...ozelEklenenSeriler]);
-    tumFilmler.forEach(f => {
-        if (f.seri && f.seri.trim() !== "") tumSerilerListesi.add(f.seri.trim());
-    });
+    tumFilmler.forEach(f => { if (f.seri && f.seri.trim() !== "") tumSerilerListesi.add(f.seri.trim()); });
     
     if (tumSerilerListesi.size === 0) {
         galeri.innerHTML = `<div class="col-span-full py-12 text-center text-gray-500">Henüz seriye ait film veya koleksiyon yok.</div>`;
@@ -350,17 +349,14 @@ function serileriCiz() {
 
     Array.from(tumSerilerListesi).sort().forEach(seriAdi => {
         const seriFilmleri = tumFilmler.filter(f => f.seri && turkceKucult(f.seri).includes(turkceKucult(seriAdi)));
-        
         let afis = "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok";
-        if (seriFilmleri.length > 0 && seriFilmleri[0].afis_yolu && seriFilmleri[0].afis_yolu.startsWith("http")) {
-            afis = seriFilmleri[0].afis_yolu;
-        }
+        if (seriFilmleri.length > 0 && seriFilmleri[0].afis_yolu && seriFilmleri[0].afis_yolu.startsWith("http")) afis = seriFilmleri[0].afis_yolu;
 
         const kart = document.createElement("div");
         kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative group";
         kart.onclick = () => { sayfaDegistir('galeri'); document.getElementById('arama-input').value = `seri:${seriAdi}`; filtrele(); };
         kart.innerHTML = `
-            <img src="${afis}" alt="${seriAdi}" class="w-full h-48 object-cover opacity-50 group-hover:opacity-80 transition" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok';">
+            <img src="${afis}" loading="lazy" alt="${seriAdi}" class="w-full h-48 object-cover opacity-50 group-hover:opacity-80 transition" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok';">
             <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent p-4 flex flex-col justify-end">
                 <h4 class="font-bold text-sm text-white drop-shadow-md">${seriAdi}</h4>
                 <p class="text-xs text-teal-400 mt-1 font-semibold">${seriFilmleri.length} Film</p>
@@ -376,15 +372,12 @@ function temalariCiz() {
     
     const tumTemalarListesi = new Set([...Object.keys(temaEmojileri), ...Object.keys(ozelEklenenTemalar)]);
     tumFilmler.forEach(f => {
-        if (f.temalar && f.temalar.trim() !== "") {
-            f.temalar.split(",").map(t => t.trim()).forEach(t => { if (t) tumTemalarListesi.add(t); });
-        }
+        if (f.temalar && f.temalar.trim() !== "") f.temalar.split(",").map(t => t.trim()).forEach(t => { if (t) tumTemalarListesi.add(t); });
     });
 
     Array.from(tumTemalarListesi).sort().forEach(temaAdi => {
         const temaKucuk = turkceKucult(temaAdi);
         const temaKoku = temaKucuk.split('(')[0].trim();
-        
         const temaFilmleri = tumFilmler.filter(f => {
             if (!f.temalar) return false;
             const ft = turkceKucult(f.temalar);
@@ -392,24 +385,17 @@ function temalariCiz() {
         });
 
         let afis = "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok";
-        if (temaFilmleri.length > 0 && temaFilmleri[0].afis_yolu && temaFilmleri[0].afis_yolu.startsWith("http")) {
-            afis = temaFilmleri[0].afis_yolu;
-        }
+        if (temaFilmleri.length > 0 && temaFilmleri[0].afis_yolu && temaFilmleri[0].afis_yolu.startsWith("http")) afis = temaFilmleri[0].afis_yolu;
 
         const emoji = temaEmojileri[temaAdi] || ozelEklenenTemalar[temaAdi] || "🏷️";
         const kart = document.createElement("div");
         kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative group";
         kart.onclick = () => { sayfaDegistir('galeri'); document.getElementById('arama-input').value = `tema:${temaAdi}`; filtrele(); };
         kart.innerHTML = `
-            <img src="${afis}" alt="${temaAdi}" class="w-full h-48 object-cover opacity-30 group-hover:opacity-60 transition" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok';">
+            <img src="${afis}" loading="lazy" alt="${temaAdi}" class="w-full h-48 object-cover opacity-30 group-hover:opacity-60 transition" onerror="this.src='https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok';">
             <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent p-4 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <span class="text-3xl drop-shadow-lg">${emoji}</span>
-                    <span class="bg-gray-950/80 text-teal-400 text-[10px] px-2.5 py-1 rounded-full border border-teal-900/60 font-mono font-bold">${temaFilmleri.length} Film</span>
-                </div>
-                <div>
-                    <h4 class="font-bold text-sm text-white leading-snug drop-shadow-md">${temaAdi}</h4>
-                </div>
+                <div class="flex justify-between items-start"><span class="text-3xl drop-shadow-lg">${emoji}</span><span class="bg-gray-950/80 text-teal-400 text-[10px] px-2.5 py-1 rounded-full border border-teal-900/60 font-mono font-bold">${temaFilmleri.length} Film</span></div>
+                <div><h4 class="font-bold text-sm text-white leading-snug drop-shadow-md">${temaAdi}</h4></div>
             </div>
         `;
         galeri.appendChild(kart);
@@ -425,10 +411,9 @@ function yeniTemaKaydet(e) {
     if (!ad) return;
     ozelEklenenTemalar[ad] = emoji;
     localStorage.setItem("film_baykusu_ozel_temalar", JSON.stringify(ozelEklenenTemalar));
-    yeniTemaModalKapat(); temalariCiz(); e.target.reset();
+    yeniTemaModalKapat(); temalariCiz(); e.target.reset(); bildirimGoster("Yeni tema başarıyla oluşturuldu.");
 }
 
-// YENİ EKLENDİ: Yeni Seri Oluşturma Modalı JS
 function yeniSeriModalAc() { document.getElementById("yeni-seri-modal").classList.remove("hidden"); document.getElementById("yeni-seri-adi").focus(); }
 function yeniSeriModalKapat() { document.getElementById("yeni-seri-modal").classList.add("hidden"); }
 function yeniSeriKaydet(e) {
@@ -439,12 +424,12 @@ function yeniSeriKaydet(e) {
         ozelEklenenSeriler.push(ad);
         localStorage.setItem("film_baykusu_ozel_seriler", JSON.stringify(ozelEklenenSeriler));
     }
-    yeniSeriModalKapat(); serileriCiz(); e.target.reset();
+    yeniSeriModalKapat(); serileriCiz(); e.target.reset(); bildirimGoster("Yeni seri başarıyla oluşturuldu.");
 }
 
 async function tmdbVeriCek() {
     const arama = document.getElementById("tmdb-arama").value.trim();
-    if (!arama) return alert("Lütfen film adı yazın!");
+    if (!arama) return bildirimGoster("Lütfen film adı yazın!", "hata");
     const buton = document.querySelector("button[onclick='tmdbVeriCek()']");
     const orjinalMetin = buton.innerText;
     buton.innerText = "⏳ Aranıyor..."; buton.disabled = true;
@@ -453,7 +438,7 @@ async function tmdbVeriCek() {
         const res = await fetch(`${BASE_URL}/tmdb/ara?film_adi=${encodeURIComponent(arama)}`);
         const data = await res.json();
         
-        if (data.hata) alert(data.hata);
+        if (data.hata) bildirimGoster(data.hata, "hata");
         else if (data.sonuclar && data.sonuclar.length > 0) {
             const listeDiv = document.getElementById("tmdb-sonuclar-listesi");
             listeDiv.innerHTML = "";
@@ -467,8 +452,8 @@ async function tmdbVeriCek() {
                 `;
             });
             document.getElementById("tmdb-secim-modal").classList.remove("hidden");
-        } else { alert("Film bulunamadı!"); }
-    } catch (e) { alert("Bağlantı hatası."); } finally { buton.innerText = orjinalMetin; buton.disabled = false; }
+        } else { bildirimGoster("Film bulunamadı!", "hata"); }
+    } catch (e) { bildirimGoster("Bağlantı hatası.", "hata"); } finally { buton.innerText = orjinalMetin; buton.disabled = false; }
 }
 
 async function tmdbFilmSec(tmdb_id) {
@@ -479,7 +464,7 @@ async function tmdbFilmSec(tmdb_id) {
     try {
         const res = await fetch(`${BASE_URL}/tmdb/detay/${tmdb_id}`);
         const data = await res.json();
-        if (data.hata) alert(data.hata);
+        if (data.hata) bildirimGoster(data.hata, "hata");
         else {
             document.getElementById("ekle-adi").value = data.adi || "";
             document.getElementById("ekle-yil").value = data.yil || "";
@@ -487,11 +472,13 @@ async function tmdbFilmSec(tmdb_id) {
             document.getElementById("ekle-sure").value = data.sure || 0;
             document.getElementById("ekle-ozet").value = data.ozet || "";
             document.getElementById("ekle-afis").value = data.afis_yolu || "";
-            if (data.turler) document.getElementById("ekle-turler").value = data.turler.join(", ");
+            // Türleri çekerken de anında standardize ediyoruz:
+            if (data.turler) document.getElementById("ekle-turler").value = data.turler.map(t => turNormallestir(t)).join(", ");
             if (data.ulkeler) document.getElementById("ekle-ulkeler").value = data.ulkeler.join(", ");
             if (data.seri) document.getElementById("ekle-seri").value = data.seri;
+            bildirimGoster("Veriler otomatik dolduruldu!");
         }
-    } catch (e) { alert("Detay çekilirken hata oluştu."); } finally { buton.innerText = "Otomatik Doldur"; buton.disabled = false; }
+    } catch (e) { bildirimGoster("Detay çekilirken hata oluştu.", "hata"); } finally { buton.innerText = "Otomatik Doldur"; buton.disabled = false; }
 }
 
 async function filmDetayAc(id) {
@@ -506,16 +493,14 @@ async function temaCikar(temaAdi) {
     const yeniTemalar = aktifFilm.temalar.split(",").map(t=>t.trim()).filter(t => t !== temaAdi);
     aktifFilm.temalar = yeniTemalar.join(", ");
     await fetch(`${API_URL}/${aktifFilm.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(aktifFilm) });
-    detayGorunumuRender(); 
-    verileriYukle(1, false); 
+    detayGorunumuRender(); verileriYukle(1, false); bildirimGoster("Tema filmden çıkarıldı.");
 }
 
 async function seriCikar() {
     if (!confirm(`Bu filmi "${aktifFilm.seri}" serisinden çıkarmak istediğinize emin misiniz?`)) return;
     aktifFilm.seri = "";
     await fetch(`${API_URL}/${aktifFilm.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(aktifFilm) });
-    detayGorunumuRender(); 
-    verileriYukle(1, false); 
+    detayGorunumuRender(); verileriYukle(1, false); bildirimGoster("Film seriden çıkarıldı.");
 }
 
 function detayGorunumuRender() {
@@ -530,7 +515,7 @@ function detayGorunumuRender() {
     if (aktifFilm.temalar && aktifFilm.temalar.trim() !== "") {
         const temalarDizi = aktifFilm.temalar.split(",").map(t => t.trim());
         temaBileşeni = temalarDizi.map(t => {
-            const emoji = temaEmojileri[t] || ozelEklenenTemalar[t] || "🏷️️";
+            const emoji = temaEmojileri[t] || ozelEklenenTemalar[t] || "🏷️";
             return `<span class="bg-gray-800 border border-gray-700 text-gray-300 text-[10px] px-2 py-0.5 rounded-full mr-1 inline-flex items-center gap-1 mb-1">${emoji} ${t} <button onclick="temaCikar('${t}')" class="text-red-400 hover:text-red-300 font-bold ml-1" title="Temadan Çıkar">✕</button></span>`;
         }).join('');
     }
@@ -599,18 +584,21 @@ async function filmGuncelle(e) {
     const guncelVeri = {
         adi: document.getElementById("d-adi").value.trim(), yil: document.getElementById("d-yil").value.trim(),
         puan: parseFloat(document.getElementById("d-puan").value) || 0.0, sure: parseInt(document.getElementById("d-sure").value) || 0,
-        turler: document.getElementById("d-turler").value.split(",").map(t => t.trim()).filter(Boolean),
+        turler: document.getElementById("d-turler").value.split(",").map(t => turNormallestir(t)).filter(Boolean),
         ulkeler: document.getElementById("d-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
         seri: document.getElementById("d-seri").value.trim(), temalar: document.getElementById("d-temalar").value.trim(),
         afis_yolu: document.getElementById("d-afis").value.trim(), ozet: document.getElementById("d-ozet").value.trim(),
         notlar: document.getElementById("d-notlar").value.trim(), izlendi: true, izlenme_tarihi: document.getElementById("d-tarih").value.trim()
     };
     await fetch(`${API_URL}/${aktifFilm.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(guncelVeri) });
-    modalKapat(); verileriYukle(1, false);
+    modalKapat(); bildirimGoster("Film başarıyla güncellendi."); verileriYukle(1, false);
 }
 
 async function filmSil(id) {
-    if (confirm("Silmek istediğinize emin misiniz?")) { await fetch(`${API_URL}/${id}`, { method: "DELETE" }); modalKapat(); verileriYukle(1, false); }
+    if (confirm("Silmek istediğinize emin misiniz?")) { 
+        await fetch(`${API_URL}/${id}`, { method: "DELETE" }); 
+        modalKapat(); bildirimGoster("Film silindi.", "hata"); verileriYukle(1, false); 
+    }
 }
 
 async function filmEkle(e) {
@@ -619,14 +607,14 @@ async function filmEkle(e) {
     const yeniVeri = {
         adi: document.getElementById("ekle-adi").value.trim(), yil: document.getElementById("ekle-yil").value.trim(),
         puan: parseFloat(document.getElementById("ekle-puan").value) || 0.0, sure: parseInt(document.getElementById("ekle-sure").value) || 0,
-        turler: document.getElementById("ekle-turler").value.split(",").map(t => t.trim()).filter(Boolean),
+        turler: document.getElementById("ekle-turler").value.split(",").map(t => turNormallestir(t)).filter(Boolean),
         ulkeler: document.getElementById("ekle-ulkeler").value.split(",").map(u => u.trim()).filter(Boolean),
         seri: document.getElementById("ekle-seri").value.trim(), temalar: document.getElementById("ekle-temalar").value.trim(),
         afis_yolu: document.getElementById("ekle-afis").value.trim(), ozet: document.getElementById("ekle-ozet").value.trim(),
         notlar: notEl ? notEl.value.trim() : "", izlendi: true, izlenme_tarihi: document.getElementById("ekle-tarih").value.trim()
     };
     await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(yeniVeri) });
-    e.target.reset(); sayfaDegistir('galeri'); verileriYukle(1, false);
+    e.target.reset(); sayfaDegistir('galeri'); bildirimGoster("Film arşive eklendi!"); verileriYukle(1, false);
 }
 
 function modalKapat() { document.getElementById("film-modal").classList.add("hidden"); aktifFilm = null; }
@@ -733,12 +721,6 @@ function analizCiz() {
     tumFilmler.forEach(f => { const p = f.puan || 0; if (p < 5) puanAraliklari['1-4']++; else if (p < 7) puanAraliklari['5-6']++; else if (p < 9) puanAraliklari['7-8']++; else puanAraliklari['9-10']++; });
     charts.puan = new Chart(document.getElementById("chart-puan"), { type: 'pie', data: { labels: Object.keys(puanAraliklari), datasets: [{ data: Object.values(puanAraliklari), backgroundColor: ['#475569', '#3b82f6', '#10b981', '#f59e0b'], borderColor: '#111827' }] }, options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#9ca3af' } } } } });
 }
-
-window.addEventListener("scroll", () => {
-    const header = document.getElementById("ana-header"), logoImg = document.getElementById("logo-img"), logoBaslik = document.getElementById("logo-baslik"), logoSlogan = document.getElementById("logo-slogan");
-    if (window.scrollY > 40) { header?.classList.replace("py-8", "py-2.5"); header?.classList.add("shadow-xl"); logoImg?.classList.replace("w-24", "w-10"); logoImg?.classList.replace("h-24", "h-10"); logoBaslik?.classList.replace("text-3xl", "text-lg"); logoSlogan?.classList.add("hidden"); } 
-    else { header?.classList.replace("py-2.5", "py-8"); header?.classList.remove("shadow-xl"); logoImg?.classList.replace("w-10", "w-24"); logoImg?.classList.replace("h-10", "h-24"); logoBaslik?.classList.replace("text-lg", "text-3xl"); logoSlogan?.classList.remove("hidden"); }
-});
 
 document.addEventListener("DOMContentLoaded", () => {
     verileriYukle(1, true).then(() => {
