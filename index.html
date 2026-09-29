@@ -9,9 +9,18 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
         .crisp-img { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }
+        /* Toast Bildirim Animasyonları */
+        .toast-enter { transform: translateX(150%); opacity: 0; }
+        .toast-active { transform: translateX(0); opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen relative pb-16">
+
+    <!-- Toast Bildirim Kutusu -->
+    <div id="toast-kutu" class="fixed top-24 right-5 z-[100] transition-all duration-500 toast-enter bg-teal-600 text-white px-5 py-3 rounded-xl shadow-[0_5px_20px_rgba(0,0,0,0.5)] flex items-center gap-3 border border-teal-400/50">
+        <span id="toast-ikon" class="text-xl">✅</span>
+        <span id="toast-mesaj" class="text-sm font-medium">İşlem başarılı!</span>
+    </div>
 
     <!-- Dinamik Sabit Header -->
     <header id="ana-header" class="fixed w-full top-0 z-40 bg-gray-900/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300 py-8">
@@ -25,7 +34,7 @@
             </div>
             <nav class="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                 <button onclick="sayfaDegistir('galeri')" id="nav-galeri" class="px-4 py-2 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition whitespace-nowrap">🖼 Afiş Galerisi</button>
-                <button onclick="sayfaDegistir('temalar')" id="nav-temalar" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition whitespace-nowrap">🏷️️ Temalar</button>
+                <button onclick="sayfaDegistir('temalar')" id="nav-temalar" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition whitespace-nowrap">🏷 Temalar</button>
                 <button onclick="sayfaDegistir('seriler')" id="nav-seriler" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition whitespace-nowrap">🎬 Seriler</button>
                 <button onclick="sayfaDegistir('ekle')" id="nav-ekle" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition whitespace-nowrap">➕ Yeni Film</button>
                 <button onclick="sayfaDegistir('analiz')" id="nav-analiz" class="px-4 py-2 rounded-lg bg-gray-900 text-gray-400 font-medium hover:bg-gray-800 transition whitespace-nowrap">📊 Analiz</button>
@@ -35,7 +44,6 @@
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 pt-56 md:pt-40">
         
-        <!-- YARDIMCI: OTOMATİK TAMAMLAMA LİSTELERİ -->
         <datalist id="mevcut-seriler-listesi"></datalist>
         <datalist id="mevcut-temalar-listesi"></datalist>
 
@@ -43,17 +51,23 @@
         <section id="sec-galeri">
             <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6 flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex-1 min-w-[200px] flex gap-2">
-                    <input type="text" id="arama-input" oninput="filtrele()" placeholder="🔍 İsimle, temayla veya seriyle ara..." class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-teal-500">
-                    <button onclick="aramaSifirla()" class="bg-gray-800 hover:bg-gray-700 px-3 rounded-lg text-sm text-gray-400" title="Aramayı Sıfırla">✖</button>
+                    <input type="text" id="arama-input" oninput="filtrele()" placeholder="🔍 İsim, tema veya seri ile ara..." class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-teal-500">
+                    <button onclick="aramaSifirla()" class="bg-gray-800 hover:bg-gray-700 px-3 rounded-lg text-sm text-gray-400" title="Sıfırla">✖</button>
                 </div>
                 <div class="flex flex-wrap gap-3">
+                    <select id="siralama" onchange="filtrele()" class="bg-gray-950 border border-teal-900 text-teal-400 font-medium rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500">
+                        <option value="isim-asc">🔤 İsim (A-Z)</option>
+                        <option value="puan-desc">⭐ Puan (Yüksekten Düşüğe)</option>
+                        <option value="yil-desc">📅 Yıl (Yeniden Eskiye)</option>
+                        <option value="sure-asc">⏱️ Süre (Kısadan Uzuna)</option>
+                    </select>
                     <select id="tur-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500"><option value="Tümü">🎭 Tüm Türler</option></select>
                     <select id="yil-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500"><option value="Tümü">📅 Tüm Yıllar</option></select>
                     <select id="puan-filtre" onchange="filtrele()" class="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-500">
                         <option value="0">⭐ Tüm Puanlar</option><option value="5">5+ Puan</option><option value="6">6+ Puan</option><option value="7">7+ Puan</option><option value="8">8+ Puan</option><option value="9">9+ Puan</option>
                     </select>
                 </div>
-                <div id="liste-sayac" class="text-xs text-gray-400 font-mono">0 film listelendi</div>
+                <div id="liste-sayac" class="text-xs text-gray-400 font-mono w-full md:w-auto text-right">0 film listelendi</div>
             </div>
             <div id="film-galerisi" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
         </section>
@@ -67,7 +81,7 @@
             <div id="temalar-galerisi" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
         </section>
 
-        <!-- ================= SEKME 3: SERİLER (YENİ BUTON EKLENDİ) ================= -->
+        <!-- ================= SEKME 3: SERİLER ================= -->
         <section id="sec-seriler" class="hidden">
             <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-900/60 p-4 rounded-xl border border-gray-800">
                 <div><h2 class="text-xl font-bold text-teal-400">🎬 Film Serileri ve Koleksiyonlar</h2><p class="text-xs text-gray-400 mt-1">Bir seriye tıklayarak filmleri listeleyebilir veya boş bir seri oluşturabilirsiniz.</p></div>
@@ -79,7 +93,6 @@
         <!-- ================= SEKME 4: YENİ FİLM EKLE ================= -->
         <section id="sec-ekle" class="hidden max-w-2xl mx-auto bg-gray-900 p-6 rounded-xl border border-gray-800">
             <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-teal-400">➕ Yeni Film Ekle</h2></div>
-
             <div class="bg-gray-950 p-4 rounded-lg border border-teal-900 mb-6 flex gap-3">
                 <input type="text" id="tmdb-arama" placeholder="Film adını yazın (Örn: Interstellar)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
                 <button type="button" onclick="tmdbVeriCek()" class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Otomatik Doldur</button>
@@ -103,7 +116,6 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-teal-400 mb-1">🏷️ Temalar / Etiketler</label>
-                        <!-- list özelliği eklendi (mevcut-temalar-listesi) -->
                         <input type="text" id="ekle-temalar" list="mevcut-temalar-listesi" placeholder="Virgülle ayır veya alttan seç" class="w-full bg-gray-950 border border-teal-900 rounded-lg p-2.5 text-sm focus:border-teal-500">
                         <div id="hizli-temalar-ekle" class="flex flex-wrap gap-1 mt-2"></div>
                     </div>
@@ -112,7 +124,7 @@
                 <div><label class="block text-xs font-semibold text-gray-400 mb-1">Özet</label><textarea id="ekle-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500"></textarea></div>
                 <div><label class="block text-xs font-semibold text-teal-400 mb-1">🦉 Kişisel Düşüncelerim</label><textarea id="ekle-notlar" rows="3" placeholder="Bu film sende nasıl bir his bıraktı?" class="w-full bg-gray-950 border border-teal-900 rounded-lg p-2.5 text-sm focus:border-teal-500"></textarea></div>
                 <div><label class="block text-xs font-semibold text-gray-400 mb-1">İzlenme Tarihi</label><input type="date" id="ekle-tarih" class="bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm text-gray-300 w-full sm:w-auto focus:border-teal-500"></div>
-                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-medium py-3 rounded-lg transition mt-4">Koleksiyona Kaydet</button>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-medium py-3 rounded-lg transition mt-4 shadow-lg">Koleksiyona Kaydet</button>
             </form>
         </section>
 
@@ -171,8 +183,7 @@
             </div>
             <div class="space-y-4">
                 <p class="text-xs text-gray-400">Koleksiyonunuzdaki bir filmi direkt olarak bu listeye aktarabilirsiniz.</p>
-                <select id="mevcut-film-secim" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white outline-none">
-                </select>
+                <select id="mevcut-film-secim" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white outline-none"></select>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="document.getElementById('mevcut-film-modal').classList.add('hidden')" class="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-sm hover:bg-gray-700">İptal</button>
                     <button type="button" onclick="mevcutFilmKaydet()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-sm font-semibold transition">Koleksiyondan Ekle</button>
@@ -181,13 +192,10 @@
         </div>
     </div>
 
-    <!-- Yeni Tema Oluşturma Modalı -->
+    <!-- Yeni Tema / Seri Modal -->
     <div id="yeni-tema-modal" class="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-gray-900 border border-teal-800/80 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-base text-teal-400 flex items-center gap-2"><span>✨</span> Yeni Tema Tanımla</h3>
-                <button onclick="yeniTemaModalKapat()" class="text-gray-400 hover:text-white text-lg">✕</button>
-            </div>
+            <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-base text-teal-400 flex items-center gap-2"><span>✨</span> Yeni Tema Tanımla</h3><button onclick="yeniTemaModalKapat()" class="text-gray-400 hover:text-white text-lg">✕</button></div>
             <form onsubmit="yeniTemaKaydet(event)" class="space-y-4">
                 <div><label class="block text-xs text-gray-400 mb-1">Tema Adı</label><input type="text" id="yeni-tema-adi" placeholder="Örn: Siberpunk & Hackerlar" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white"></div>
                 <div><label class="block text-xs text-gray-400 mb-1">Emoji / İkon</label><input type="text" id="yeni-tema-emoji" placeholder="Örn: 💻 veya 🚀" value="🏷️" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white"></div>
@@ -195,14 +203,9 @@
             </form>
         </div>
     </div>
-
-    <!-- Yeni Seri Oluşturma Modalı -->
     <div id="yeni-seri-modal" class="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 hidden backdrop-blur-sm">
         <div class="bg-gray-900 border border-teal-800/80 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-base text-teal-400 flex items-center gap-2"><span>🎬</span> Yeni Seri Tanımla</h3>
-                <button onclick="yeniSeriModalKapat()" class="text-gray-400 hover:text-white text-lg">✕</button>
-            </div>
+            <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-base text-teal-400 flex items-center gap-2"><span>🎬</span> Yeni Seri Tanımla</h3><button onclick="yeniSeriModalKapat()" class="text-gray-400 hover:text-white text-lg">✕</button></div>
             <form onsubmit="yeniSeriKaydet(event)" class="space-y-4">
                 <div><label class="block text-xs text-gray-400 mb-1">Seri Adı</label><input type="text" id="yeni-seri-adi" placeholder="Örn: Yüzüklerin Efendisi Serisi" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white"></div>
                 <div class="flex justify-end gap-2 pt-2"><button type="button" onclick="yeniSeriModalKapat()" class="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-sm hover:bg-gray-700">İptal</button><button type="submit" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-sm font-semibold transition">Oluştur</button></div>
@@ -214,23 +217,13 @@
     <div class="fixed bottom-6 left-6 z-[70] pointer-events-none">
         <div id="ai-sohbet-kutu" class="hidden pointer-events-auto mb-3 w-[340px] sm:w-[380px] h-[480px] bg-gray-900/95 border border-teal-700/80 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden backdrop-blur-md">
             <div class="bg-gray-950 p-3.5 border-b border-gray-800 flex justify-between items-center">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-full overflow-hidden border border-teal-400 bg-white flex items-center justify-center"><img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover scale-125 crisp-img"></div>
-                    <div><h4 class="text-sm font-bold text-white leading-tight">Sinebot AI</h4><span class="text-[10px] text-teal-400 flex items-center gap-1">● Arşive Bağlı Danışman</span></div>
-                </div>
+                <div class="flex items-center gap-2.5"><div class="w-9 h-9 rounded-full overflow-hidden border border-teal-400 bg-white flex items-center justify-center"><img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover scale-125 crisp-img"></div><div><h4 class="text-sm font-bold text-white leading-tight">Sinebot AI</h4><span class="text-[10px] text-teal-400 flex items-center gap-1">● Arşive Bağlı Danışman</span></div></div>
                 <button onclick="aiSohbetToggle()" class="text-gray-400 hover:text-white text-base px-2">✕</button>
             </div>
-            <div id="ai-mesajlar" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs leading-relaxed">
-                <div class="bg-gray-800/90 text-gray-200 p-3 rounded-xl rounded-tl-none border border-gray-700 max-w-[88%]">Selam! Ben Sinebot. Arşivindeki filmleri ve kişisel notlarını inceledim. Bugün senin için ne bulmamı istersin?</div>
-            </div>
-            <div class="p-3 bg-gray-950 border-t border-gray-800 flex gap-2">
-                <input type="text" id="ai-input" onkeydown="if(event.key==='Enter') aiMesajGonder()" placeholder="Örn: 2 saatten kısa gerilim öner..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs focus:border-teal-500 focus:outline-none text-white">
-                <button onclick="aiMesajGonder()" id="ai-gonder-btn" class="bg-teal-600 hover:bg-teal-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition">Gönder</button>
-            </div>
+            <div id="ai-mesajlar" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs leading-relaxed"><div class="bg-gray-800/90 text-gray-200 p-3 rounded-xl rounded-tl-none border border-gray-700 max-w-[88%]">Selam! Ben Sinebot. Arşivindeki filmleri ve kişisel notlarını inceledim. Bugün senin için ne bulmamı istersin?</div></div>
+            <div class="p-3 bg-gray-950 border-t border-gray-800 flex gap-2"><input type="text" id="ai-input" onkeydown="if(event.key==='Enter') aiMesajGonder()" placeholder="Örn: 2 saatten kısa gerilim öner..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs focus:border-teal-500 focus:outline-none text-white"><button onclick="aiMesajGonder()" id="ai-gonder-btn" class="bg-teal-600 hover:bg-teal-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition">Gönder</button></div>
         </div>
-        <button onclick="aiSohbetToggle()" id="ai-toggle-btn" class="pointer-events-auto w-20 h-20 rounded-full bg-white border-2 border-teal-400 shadow-[0_0_25px_rgba(45,212,191,0.6)] overflow-hidden transition hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center">
-            <img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover scale-135 crisp-img">
-        </button>
+        <button onclick="aiSohbetToggle()" id="ai-toggle-btn" class="pointer-events-auto w-20 h-20 rounded-full bg-white border-2 border-teal-400 shadow-[0_0_25px_rgba(45,212,191,0.6)] overflow-hidden transition hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center"><img src="sinebot.png" alt="Sinebot" class="w-full h-full object-cover scale-135 crisp-img"></button>
     </div>
 
     <script src="app.js"></script>
