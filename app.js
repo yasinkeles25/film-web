@@ -121,7 +121,6 @@ function dropdownlariDoldur() {
     yilSelect.innerHTML = '<option value="Tümü">📅 Tüm Yıllar</option>';
     Array.from(yillarSet).sort((a, b) => b - a).forEach(yil => yilSelect.innerHTML += `<option value="${yil}">${yil}</option>`);
 
-    // Datalist için serileri doldur (Otomatik tamamlama)
     const serilerDatalist = document.getElementById("mevcut-seriler-listesi");
     if(serilerDatalist) {
         serilerDatalist.innerHTML = "";
@@ -135,7 +134,6 @@ function hizliTemalariRenderEt(hedefDivId, inputId) {
     div.innerHTML = "";
     const tumTemalar = [...new Set([...Object.keys(temaEmojileri), ...Object.keys(ozelEklenenTemalar)])];
     
-    // Veritabanındaki diğer kullanıcı temalarını da ekle
     tumFilmler.forEach(f => {
         if (f.temalar && f.temalar.trim() !== "") {
             f.temalar.split(",").map(t => t.trim()).forEach(t => { if (t && !tumTemalar.includes(t)) tumTemalar.push(t); });
@@ -228,7 +226,6 @@ function galeriRender(filmler, aktifSeriAdi = "", aktifTemaAdi = "") {
     document.getElementById("liste-sayac").innerText = `${filmler.length} film listelendi`;
     galeri.innerHTML = "";
 
-    // SERİ BAŞLIĞI ve MEVCUT FİLM EKLEME
     if (aktifSeriAdi !== "") {
         const headerDiv = document.createElement("div");
         headerDiv.className = "col-span-full bg-teal-900/20 border border-teal-800 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2";
@@ -242,7 +239,6 @@ function galeriRender(filmler, aktifSeriAdi = "", aktifTemaAdi = "") {
         galeri.appendChild(headerDiv);
     }
     
-    // TEMA BAŞLIĞI ve MEVCUT FİLM EKLEME
     if (aktifTemaAdi !== "") {
         const emoji = temaEmojileri[aktifTemaAdi] || ozelEklenenTemalar[aktifTemaAdi] || "🏷️";
         const headerDiv = document.createElement("div");
@@ -284,7 +280,6 @@ function koleksiyonaEkleYonlendir(tip, isim) {
     }
 }
 
-// ARŞİVDEN FİLM SEÇME MODALI
 let aktifMevcutEklemeTipi = "";
 let aktifMevcutEklemeIsmi = "";
 
@@ -321,9 +316,7 @@ async function mevcutFilmKaydet() {
         film.temalar = temalarList.join(", ");
     }
 
-    const modal = document.getElementById("mevcut-film-modal");
-    modal.classList.add("hidden");
-
+    document.getElementById("mevcut-film-modal").classList.add("hidden");
     await fetch(`${API_URL}/${film.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(film) });
     verileriYukle(1, false); 
 }
@@ -349,11 +342,14 @@ function serileriCiz() {
         const filmler = seriGruplari[seriAdi];
         const afis = (filmler[0].afis_yolu && filmler[0].afis_yolu.startsWith("http")) ? filmler[0].afis_yolu : "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Afis+Yok";
         const kart = document.createElement("div");
-        kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative";
+        kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative group";
         kart.onclick = () => { sayfaDegistir('galeri'); document.getElementById('arama-input').value = `seri:${seriAdi}`; filtrele(); };
         kart.innerHTML = `
-            <img src="${afis}" alt="${seriAdi}" class="w-full h-48 object-cover opacity-60 hover:opacity-100 transition">
-            <div class="absolute bottom-0 w-full bg-gradient-to-t from-black to-transparent p-4 pt-12"><h4 class="font-bold text-sm text-white">${seriAdi}</h4><p class="text-xs text-teal-400 mt-1">${filmler.length} Film</p></div>
+            <img src="${afis}" alt="${seriAdi}" class="w-full h-48 object-cover opacity-50 group-hover:opacity-80 transition">
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent p-4 flex flex-col justify-end">
+                <h4 class="font-bold text-sm text-white drop-shadow-md">${seriAdi}</h4>
+                <p class="text-xs text-teal-400 mt-1 font-semibold">${filmler.length} Film</p>
+            </div>
         `;
         galeri.appendChild(kart);
     });
@@ -373,19 +369,33 @@ function temalariCiz() {
     Array.from(tumTemalarListesi).sort().forEach(temaAdi => {
         const temaKucuk = turkceKucult(temaAdi);
         const temaKoku = temaKucuk.split('(')[0].trim();
-        const filmSayisi = tumFilmler.filter(f => {
+        
+        const temaFilmleri = tumFilmler.filter(f => {
             if (!f.temalar) return false;
             const ft = turkceKucult(f.temalar);
             return ft.includes(temaKucuk) || ft.includes(temaKoku);
-        }).length;
+        });
+
+        let afis = "https://via.placeholder.com/300x450/1f2937/9ca3af?text=Gorsel+Yok";
+        if (temaFilmleri.length > 0 && temaFilmleri[0].afis_yolu) {
+            afis = temaFilmleri[0].afis_yolu;
+        }
 
         const emoji = temaEmojileri[temaAdi] || ozelEklenenTemalar[temaAdi] || "🏷️";
         const kart = document.createElement("div");
-        kart.className = "bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-lg hover:border-teal-500/80 hover:bg-gray-800/80 transition cursor-pointer flex flex-col justify-between";
+        kart.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg hover:border-teal-500 hover:scale-105 transition cursor-pointer relative group";
         kart.onclick = () => { sayfaDegistir('galeri'); document.getElementById('arama-input').value = `tema:${temaAdi}`; filtrele(); };
         kart.innerHTML = `
-            <div><div class="flex items-center justify-between mb-3"><span class="text-2xl">${emoji}</span><span class="bg-gray-950 text-teal-400 text-xs px-2.5 py-1 rounded-full border border-teal-900/60 font-mono font-semibold">${filmSayisi} Film</span></div><h4 class="font-bold text-sm text-white leading-snug">${temaAdi}</h4></div>
-            <div class="mt-4 pt-3 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-500"><span>Filmleri Listele</span><span class="text-teal-400">→</span></div>
+            <img src="${afis}" alt="${temaAdi}" class="w-full h-48 object-cover opacity-30 group-hover:opacity-60 transition">
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent p-4 flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-3xl drop-shadow-lg">${emoji}</span>
+                    <span class="bg-gray-950/80 text-teal-400 text-[10px] px-2.5 py-1 rounded-full border border-teal-900/60 font-mono font-bold">${temaFilmleri.length} Film</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-sm text-white leading-snug drop-shadow-md">${temaAdi}</h4>
+                </div>
+            </div>
         `;
         galeri.appendChild(kart);
     });
@@ -403,17 +413,49 @@ function yeniTemaKaydet(e) {
     yeniTemaModalKapat(); temalariCiz(); e.target.reset();
 }
 
-function bugununTarihi() { return new Date().toISOString().split('T')[0]; }
-
+// YENİ EKLENDİ: TMDB ÇOKLU SONUÇ ÇEKME VE SEÇME
 async function tmdbVeriCek() {
     const arama = document.getElementById("tmdb-arama").value.trim();
     if (!arama) return alert("Lütfen film adı yazın!");
     const buton = document.querySelector("button[onclick='tmdbVeriCek()']");
     const orjinalMetin = buton.innerText;
-    buton.innerText = "⏳ Bulunuyor..."; buton.disabled = true;
+    buton.innerText = "⏳ Aranıyor..."; buton.disabled = true;
 
     try {
         const res = await fetch(`${BASE_URL}/tmdb/ara?film_adi=${encodeURIComponent(arama)}`);
+        const data = await res.json();
+        
+        if (data.hata) alert(data.hata);
+        else if (data.sonuclar && data.sonuclar.length > 0) {
+            const listeDiv = document.getElementById("tmdb-sonuclar-listesi");
+            listeDiv.innerHTML = "";
+            data.sonuclar.forEach(film => {
+                const afis = film.afis ? film.afis : "https://via.placeholder.com/100x150/1f2937/9ca3af?text=Afis+Yok";
+                listeDiv.innerHTML += `
+                    <div onclick="tmdbFilmSec(${film.tmdb_id})" class="flex gap-4 items-center bg-gray-950 p-3 rounded-lg border border-gray-800 hover:border-teal-500 cursor-pointer transition">
+                        <img src="${afis}" class="w-12 h-16 object-cover rounded">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-200">${film.adi}</h4>
+                            <span class="text-xs text-teal-400">${film.yil}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById("tmdb-secim-modal").classList.remove("hidden");
+        } else {
+            alert("Film bulunamadı!");
+        }
+    } catch (e) { alert("Bağlantı hatası."); } finally { buton.innerText = orjinalMetin; buton.disabled = false; }
+}
+
+async function tmdbFilmSec(tmdb_id) {
+    document.getElementById("tmdb-secim-modal").classList.add("hidden");
+    const buton = document.querySelector("button[onclick='tmdbVeriCek()']");
+    const orjinalMetin = buton.innerText;
+    buton.innerText = "⏳ Dolduruluyor..."; buton.disabled = true;
+
+    try {
+        const res = await fetch(`${BASE_URL}/tmdb/detay/${tmdb_id}`);
         const data = await res.json();
         if (data.hata) alert(data.hata);
         else {
@@ -427,7 +469,7 @@ async function tmdbVeriCek() {
             if (data.ulkeler) document.getElementById("ekle-ulkeler").value = data.ulkeler.join(", ");
             if (data.seri) document.getElementById("ekle-seri").value = data.seri;
         }
-    } catch (e) { alert("Bağlantı hatası."); } finally { buton.innerText = orjinalMetin; buton.disabled = false; }
+    } catch (e) { alert("Detay çekilirken hata oluştu."); } finally { buton.innerText = "Otomatik Doldur"; buton.disabled = false; }
 }
 
 async function filmDetayAc(id) {
@@ -437,7 +479,6 @@ async function filmDetayAc(id) {
     document.getElementById("film-modal").classList.remove("hidden");
 }
 
-// X İKONLARIYLA SERİDEN VEYA TEMADAN ÇIKARMA
 async function temaCikar(temaAdi) {
     if (!confirm(`"${temaAdi}" etiketini bu filmden çıkarmak istediğinize emin misiniz?`)) return;
     const yeniTemalar = aktifFilm.temalar.split(",").map(t=>t.trim()).filter(t => t !== temaAdi);
@@ -677,7 +718,6 @@ window.addEventListener("scroll", () => {
     else { header?.classList.replace("py-2.5", "py-8"); header?.classList.remove("shadow-xl"); logoImg?.classList.replace("w-10", "w-24"); logoImg?.classList.replace("h-10", "h-24"); logoBaslik?.classList.replace("text-lg", "text-3xl"); logoSlogan?.classList.remove("hidden"); }
 });
 
-// Sayfa ilk açıldığında Hash'i kontrol edip doğru sekmeye gider
 document.addEventListener("DOMContentLoaded", () => {
     verileriYukle(1, true).then(() => {
         const hash = window.location.hash.replace("#", "");
