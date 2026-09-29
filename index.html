@@ -69,16 +69,21 @@
             <div id="film-galerisi" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
         </section>
 
-        <!-- ================= SEKME YENİ: TEMALAR ================= -->
+        <!-- ================= SEKME 2: TEMALAR ================= -->
         <section id="sec-temalar" class="hidden">
-            <div class="mb-6 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-teal-400">🏷️ Küratör Temaları ve Etiketler</h2>
-                <p class="text-sm text-gray-400">Bir temaya tıklayarak o ruh haline ait filmleri listeleyebilirsiniz.</p>
+            <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                <div>
+                    <h2 class="text-xl font-bold text-teal-400">🏷️ Küratör Temaları ve Etiketler</h2>
+                    <p class="text-xs text-gray-400 mt-1">Bir temaya tıklayarak filmleri listeleyebilir veya yeni bir tema oluşturabilirsiniz.</p>
+                </div>
+                <button onclick="yeniTemaModalAc()" class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition shadow-lg flex items-center gap-2">
+                    <span>✨</span> Yeni Tema Ekle
+                </button>
             </div>
             <div id="temalar-galerisi" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
         </section>
 
-        <!-- ================= SEKME 2: SERİLER ================= -->
+        <!-- ================= SEKME 3: SERİLER ================= -->
         <section id="sec-seriler" class="hidden">
             <div class="mb-6 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-teal-400">🎬 Film Serileri ve Koleksiyonlar</h2>
@@ -86,7 +91,7 @@
             <div id="seriler-galerisi" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
         </section>
 
-        <!-- ================= SEKME 3: YENİ FİLM EKLE ================= -->
+        <!-- ================= SEKME 4: YENİ FİLM EKLE ================= -->
         <section id="sec-ekle" class="hidden max-w-2xl mx-auto bg-gray-900 p-6 rounded-xl border border-gray-800">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-teal-400">➕ Yeni Film Ekle</h2>
@@ -156,7 +161,7 @@
             </form>
         </section>
 
-        <!-- ================= SEKME 4: ANALİZ ================= -->
+        <!-- ================= SEKME 5: ANALİZ ================= -->
         <section id="sec-analiz" class="hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 text-center shadow-lg">
@@ -185,8 +190,6 @@
                 </div>
                 <div id="chart-harita" style="width: 100%; height: 420px;" class="flex items-center justify-center cursor-pointer"></div>
             </div>
-
-            <!-- Eski kelime bulutu HTML div'i tamamen silindi -->
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-lg">
@@ -221,7 +224,31 @@
         </div>
     </div>
 
-    <!-- ================= SOL ALT KÖŞEYE ALINMIŞ SİNEBOT WIDGET'I ================= -->
+    <!-- ================= YENİ TEMA OLUŞTURMA MODALI ================= -->
+    <div id="yeni-tema-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-gray-900 border border-teal-800/80 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-base text-teal-400 flex items-center gap-2"><span>✨</span> Yeni Tema Tanımla</h3>
+                <button onclick="yeniTemaModalKapat()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+            <form onsubmit="yeniTemaKaydet(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tema Adı</label>
+                    <input type="text" id="yeni-tema-adi" placeholder="Örn: Siberpunk & Hackerlar" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Emoji / İkon</label>
+                    <input type="text" id="yeni-tema-emoji" placeholder="Örn: 💻 veya 🚀" value="🏷️" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="yeniTemaModalKapat()" class="px-3 py-1.5 bg-gray-800 text-gray-300 rounded-lg text-sm hover:bg-gray-700">İptal</button>
+                    <button type="submit" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-sm font-semibold transition">Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= SOL ALT SİNEBOT WIDGET'I ================= -->
     <div class="fixed bottom-6 left-6 z-50 pointer-events-none">
         <div id="ai-sohbet-kutu" class="hidden pointer-events-auto mb-3 w-[340px] sm:w-[380px] h-[480px] bg-gray-900/95 border border-teal-700/80 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden backdrop-blur-md">
             <div class="bg-gray-950 p-3.5 border-b border-gray-800 flex justify-between items-center">
