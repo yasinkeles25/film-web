@@ -9,7 +9,6 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
         .crisp-img { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }
-        /* Toast Bildirim Animasyonları */
         .toast-enter { transform: translateX(150%); opacity: 0; }
         .toast-active { transform: translateX(0); opacity: 1; }
     </style>
@@ -94,12 +93,15 @@
         <section id="sec-ekle" class="hidden max-w-2xl mx-auto bg-gray-900 p-6 rounded-xl border border-gray-800">
             <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-teal-400">➕ Yeni Film Ekle</h2></div>
             <div class="bg-gray-950 p-4 rounded-lg border border-teal-900 mb-6 flex gap-3">
-                <input type="text" id="tmdb-arama" placeholder="Film adını yazın (Örn: Interstellar)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
+                <input type="text" id="tmdb-arama" placeholder="Orijinal veya Türkçe adını yazın (Örn: The Matrix)" class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-teal-500">
                 <button type="button" onclick="tmdbVeriCek()" class="bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition">Otomatik Doldur</button>
             </div>
             
             <form onsubmit="filmEkle(event)" class="space-y-4">
-                <div><label class="block text-xs font-semibold text-gray-400 mb-1">Film Adı *</label><input type="text" id="ekle-adi" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-semibold text-gray-400 mb-1">Orijinal / İngilizce Adı *</label><input type="text" id="ekle-adi" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-white"></div>
+                    <div><label class="block text-xs font-semibold text-gray-400 mb-1">Türkçe Adı</label><input type="text" id="ekle-turkce-adi" placeholder="Örn: Başlangıç" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500 text-gray-300"></div>
+                </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div><label class="block text-xs font-semibold text-gray-400 mb-1">Yıl</label><input type="text" id="ekle-yil" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm"></div>
                     <div><label class="block text-xs font-semibold text-gray-400 mb-1">Puan (0-10)</label><input type="number" step="0.1" id="ekle-puan" value="7.0" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm"></div>
@@ -120,7 +122,7 @@
                         <div id="hizli-temalar-ekle" class="flex flex-wrap gap-1 mt-2"></div>
                     </div>
                 </div>
-                <div><label class="block text-xs font-semibold text-gray-400 mb-1">Afiş URL</label><input type="text" id="ekle-afis" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm"></div>
+                <div><label class="block text-xs font-semibold text-gray-400 mb-1">Afiş URL (Orijinal Afiş)</label><input type="text" id="ekle-afis" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm text-teal-400"></div>
                 <div><label class="block text-xs font-semibold text-gray-400 mb-1">Özet</label><textarea id="ekle-ozet" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm focus:border-teal-500"></textarea></div>
                 <div><label class="block text-xs font-semibold text-teal-400 mb-1">🦉 Kişisel Düşüncelerim</label><textarea id="ekle-notlar" rows="3" placeholder="Bu film sende nasıl bir his bıraktı?" class="w-full bg-gray-950 border border-teal-900 rounded-lg p-2.5 text-sm focus:border-teal-500"></textarea></div>
                 <div><label class="block text-xs font-semibold text-gray-400 mb-1">İzlenme Tarihi</label><input type="date" id="ekle-tarih" class="bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm text-gray-300 w-full sm:w-auto focus:border-teal-500"></div>
